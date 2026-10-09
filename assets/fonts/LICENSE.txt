@@ -1,0 +1,7 @@
+Fuentes incluidas en este directorio (subconjunto latino), servidas desde el propio dominio:
+
+- Press Start 2P  - Copyright 2012 The Press Start 2P Project Authors (cody@zone38.net)
+- VT323           - Copyright 2011 The VT323 Project Authors (peter.hull@oikoi.com)
+
+Ambas se distribuyen bajo la SIL Open Font License, Version 1.1:
+https://openfontlicense.org/open-font-license-official-text/

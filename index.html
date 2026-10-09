@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sanxe Games — Arcade de sátira política</title>
+  <meta name="description" content="Videojuegos retro de sátira política. Todos los colores, ningún partido. Esquiva barriles, coge el tren y ríete de quien manda. Gratis y en el navegador.">
+  <meta name="theme-color" content="#0b1021">
+  <link rel="canonical" href="https://sanxegames.es/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:site_name" content="Sanxe Games">
+  <meta property="og:title" content="Sanxe Games — Los políticos nunca dimiten. Aquí, al menos, pierden vidas.">
+  <meta property="og:description" content="Arcade retro de sátira política. Todos los colores, ningún partido. Juega gratis en el navegador.">
+  <meta property="og:url" content="https://sanxegames.es/">
+  <meta property="og:image" content="https://sanxegames.es/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Sanxe Games: arcade de sátira política con barriles, un tren y un viajero esquivando al villano.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sanxe Games — Arcade de sátira política">
+  <meta name="twitter:description" content="Los políticos nunca dimiten. Aquí, al menos, pierden vidas.">
+  <meta name="twitter:image" content="https://sanxegames.es/assets/og.png">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/PressStart2P-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/VT323-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/home.css?v=8">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body>
+  <a class="skip" href="#juegos">Saltar al contenido</a>
+
+  <div id="boot" aria-hidden="true">
+    <div id="boot-lines"></div>
+    <div class="hint">PULSA CUALQUIER TECLA PARA SALTAR</div>
+  </div>
+
+  <header class="hud" aria-label="Marcador">
+    <span>1UP<b id="hud-score">000000</b></span>
+    <span class="hi">HI-SCORE<b>9999999</b></span>
+    <span>CRÉDITOS<b id="hud-credits">00</b></span>
+    <span class="grow"></span>
+    <nav aria-label="Secciones">
+      <a href="#juegos">JUEGOS</a>
+      <a href="#sondeo">SONDEO</a>
+      <a href="#salon">SALÓN</a>
+      <a href="#manifiesto">MANIFIESTO</a>
+    </nav>
+    <button id="sound" type="button" aria-pressed="true" aria-label="Activar o desactivar sonido"><span class="snd-l">SONIDO </span><span id="sound-s">SÍ</span></button>
+  </header>
+
+  <main>
+    <!-- ================= HERO ================= -->
+    <section class="hero" id="inicio" aria-labelledby="logo">
+      <canvas id="hero-canvas" aria-hidden="true"></canvas>
+      <div class="hero-copy">
+        <p class="badge">* ARCADE DE SÁTIRA POLÍTICA *</p>
+        <h1 class="logo" id="logo" aria-label="Sanxe Games">
+          <span class="l1" data-t="SANXE" aria-hidden="true">SANXE</span>
+          <span class="l2" data-t="GAMES" aria-hidden="true">GAMES</span>
+        </h1>
+        <p class="tagline" id="tagline" data-full="Los políticos nunca dimiten. En nuestros juegos, al menos, pierden vidas.">Los políticos nunca dimiten. En nuestros juegos, al menos, <em>pierden vidas.</em></p>
+        <div class="cta">
+          <span class="press">PRESS START</span>
+          <button class="btn" id="coin" type="button">Insertar ficha</button>
+          <small>1 ficha = 3 vidas · sin subvenciones · sin letra pequeña</small>
+        </div>
+      </div>
+      <a class="scroll-cue" href="#juegos" aria-label="Ir a los juegos">ELIGE TU VILLANO<span>▼</span></a>
+      <div class="girder" aria-hidden="true"></div>
+    </section>
+
+    <!-- ================= TELETIPO ================= -->
+    <div class="ticker" role="region" aria-label="Titulares satíricos">
+      <div class="ticker-tag"><span><i></i>ÚLTIMA HORA</span></div>
+      <div class="ticker-view">
+        <div class="ticker-run">
+          <ul>
+            <li>El Gobierno asegura que el tren llegará puntual a la estación equivocada</li>
+            <li>La oposición propone una comisión para estudiar por qué no hay comisiones</li>
+            <li>Se cae el sistema otra vez: las elecciones se repiten por motivos técnicos</li>
+            <li>Un político admite haber leído un artículo entero y lo niega a los cinco minutos</li>
+            <li>Los barriles suben un 300 % y la culpa es del gobierno anterior</li>
+            <li>Comunicado: la dimisión que no se ha producido no ha sido aceptada</li>
+            <li>Inversión récord en promesas: cero euros ejecutados</li>
+          </ul>
+          <ul aria-hidden="true">
+            <li>El Gobierno asegura que el tren llegará puntual a la estación equivocada</li>
+            <li>La oposición propone una comisión para estudiar por qué no hay comisiones</li>
+            <li>Se cae el sistema otra vez: las elecciones se repiten por motivos técnicos</li>
+            <li>Un político admite haber leído un artículo entero y lo niega a los cinco minutos</li>
+            <li>Los barriles suben un 300 % y la culpa es del gobierno anterior</li>
+            <li>Comunicado: la dimisión que no se ha producido no ha sido aceptada</li>
+            <li>Inversión récord en promesas: cero euros ejecutados</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= JUEGOS ================= -->
+    <section class="section" id="juegos" aria-labelledby="t-juegos">
+      <div class="wrap">
+        <p class="kicker reveal">NIVEL 1 · SELECCIÓN DE PERSONAJE</p>
+        <h2 class="title reveal" id="t-juegos">ELIGE TU VILLANO</h2>
+        <p class="lead reveal">Un juego por cada cara conocida. Sin favoritismos: acaban todos en el andén, esquivando lo que ellos mismos han lanzado.</p>
+
+        <article class="cab reveal">
+          <div class="cab-body">
+            <h3 class="cab-marquee">KING KONGESTION</h3>
+            <a class="screen" href="king-kongestion/" aria-label="Jugar a King Kongestion">
+              <canvas id="attract" width="480" height="300" aria-hidden="true"></canvas>
+              <span class="insert">PULSA PARA JUGAR</span>
+            </a>
+            <div class="cab-controls" aria-hidden="true"><span class="stick"></span><span class="pbtn a"></span><span class="pbtn b"></span></div>
+          </div>
+          <div class="cab-info">
+            <p class="kicker">JUEGO Nº 1 · DISPONIBLE</p>
+            <h3>King Kongestion</h3>
+            <p>Llegas tarde al trabajo y el ministro del andén te recibe a barrilazos. Esquiva, trepa y alcanza el tren de la vía 6. Cada línea que superas, los barriles van más rápido.</p>
+            <ul class="chips">
+              <li>1 JUGADOR</li>
+              <li>TECLADO + MÓVIL</li>
+              <li class="hot">DIFICULTAD: SUBE</li>
+            </ul>
+            <blockquote class="quote"><b>"Cero retrasos registrados."</b>El villano, dos segundos antes de lanzarte un barril.</blockquote>
+            <a class="btn red" id="play" href="king-kongestion/">Jugar ahora</a>
+          </div>
+        </article>
+
+        <div class="grid3">
+          <a class="locked playable reveal" href="pastor-de-socios/" aria-label="Jugar a Pastor de socios">
+            <div class="shot"><canvas id="pastor-thumb" width="96" height="72" aria-hidden="true"></canvas></div>
+            <div class="body">
+              <span class="cand">JUEGO Nº 2 · DISPONIBLE</span>
+              <h3>PASTOR DE SOCIOS</h3>
+              <p>Un perro pastor guía a los socios del Gobierno hasta el corral de los 176 votos. Sin agobiarlos: si se enfadan, se fugan al Grupo Mixto.</p>
+              <span class="tag">JUGAR</span>
+            </div>
+          </a>
+          <a class="locked playable reveal" href="flappy-falcon/" aria-label="Jugar a Flappy Falcon">
+            <div class="shot"><canvas id="falcon-thumb" width="128" height="96" aria-hidden="true"></canvas></div>
+            <div class="body">
+              <span class="cand">JUEGO Nº 3 · DISPONIBLE</span>
+              <h3>FLAPPY FALCON</h3>
+              <p>Un perro piloto cruza el cielo en el avión oficial, esquivando nubarrones de titulares. Y al final, aterrizar en una pista diminuta.</p>
+              <span class="tag">JUGAR</span>
+            </div>
+          </a>
+          <a class="locked playable reveal" href="me-gusta-la-fruta/" aria-label="Jugar a Me gusta la fruta">
+            <div class="shot"><canvas id="fruit-thumb" width="128" height="96" aria-hidden="true"></canvas><span class="stamp new">NUEVO</span></div>
+            <div class="body">
+              <span class="cand">JUEGO Nº 4 · DISPONIBLE</span>
+              <h3>ME GUSTA LA FRUTA</h3>
+              <p>La presidenta ha montado una frutería. Corta toda la fruta que vuele, esquiva los impuestos y aguanta la rueda de prensa.</p>
+              <span class="tag">JUGAR</span>
+            </div>
+          </a>
+          <article class="locked reveal" tabindex="0">
+            <div class="shot"><canvas data-sil="magnate" width="48" height="56" aria-hidden="true"></canvas><span class="stamp">PRÓXIMAMENTE</span></div>
+            <div class="body">
+              <span class="cand">CANDIDATO Nº 2</span>
+              <h3>EL MAGNATE</h3>
+              <p>Construir, despedir y tuitear a las tres de la madrugada. Género: plataformas con mucho flequillo.</p>
+              <div class="load-l"><span>CARGANDO PROGRAMA…</span><b>87%</b></div>
+              <div class="load" aria-hidden="true"><i></i></div>
+            </div>
+            <div class="deny">ACCESO DENEGADO: FALTA PRESUPUESTO</div>
+          </article>
+          <article class="locked reveal" tabindex="0">
+            <div class="shot"><canvas data-sil="tribuno" width="48" height="56" aria-hidden="true"></canvas><span class="stamp">PRÓXIMAMENTE</span></div>
+            <div class="body">
+              <span class="cand">CANDIDATO Nº 3</span>
+              <h3>EL TRIBUNO</h3>
+              <p>Micrófono, bandera y muchísima rabia. Género: esquivar enfados en un atril de tamaño limitado.</p>
+              <div class="load-l"><span>CARGANDO PROGRAMA…</span><b>87%</b></div>
+              <div class="load" aria-hidden="true"><i></i></div>
+            </div>
+            <div class="deny">ACCESO DENEGADO: LA COMISIÓN SE REÚNE</div>
+          </article>
+          <article class="locked reveal" tabindex="0">
+            <div class="shot"><canvas data-sil="mystery" width="48" height="56" aria-hidden="true"></canvas><span class="stamp">TU VOTO</span></div>
+            <div class="body">
+              <span class="cand">CANDIDATO Nº ?</span>
+              <h3>EL SIGUIENTE</h3>
+              <p>¿Quién merece el próximo barril? Izquierda, derecha, arriba, abajo: en este arcade no se perdona a nadie.</p>
+              <div class="load-l"><span>CARGANDO PROGRAMA…</span><b>87%</b></div>
+              <div class="load" aria-hidden="true"><i></i></div>
+            </div>
+            <div class="deny">ACCESO DENEGADO: SE HA CAÍDO EL SISTEMA</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <div class="girder" aria-hidden="true"></div>
+
+    <!-- ================= SONDEO ================= -->
+    <section class="section" id="sondeo" aria-labelledby="t-sondeo">
+      <div class="wrap">
+        <p class="kicker reveal">ENCUESTA EXCLUSIVA · 100 % FIABLE</p>
+        <h2 class="title reveal" id="t-sondeo">SONDEO DE LA CASA</h2>
+        <div class="poll reveal" id="poll">
+          <p class="poll-q">¿QUIÉN TIENE LA CULPA DE TODO?</p>
+          <p class="poll-sub">Pulsa VOTAR para influir en el resultado. Es tan vinculante como una promesa electoral.</p>
+          <div class="rows">
+            <div class="row" data-v="87" style="--c:var(--cyan)"><span class="lb">El gobierno anterior</span><div class="track"><div class="fill"></div></div><span class="v">0%</span></div>
+            <div class="row" data-v="74" style="--c:var(--yellow)"><span class="lb">La oposición</span><div class="track"><div class="fill"></div></div><span class="v">0%</span></div>
+            <div class="row" data-v="63" style="--c:var(--red)"><span class="lb">El clima</span><div class="track"><div class="fill"></div></div><span class="v">0%</span></div>
+            <div class="row" data-v="58" style="--c:var(--green)"><span class="lb">Los medios</span><div class="track"><div class="fill"></div></div><span class="v">0%</span></div>
+            <div class="row" data-v="41" style="--c:#8fa8ff"><span class="lb">Tú, por llegar tarde</span><div class="track"><div class="fill"></div></div><span class="v">0%</span></div>
+          </div>
+          <div class="poll-foot">
+            <span class="tot">SUMA TOTAL: <b id="poll-total">0%</b></span>
+            <span>MARGEN DE ERROR: <b>±100%</b></span>
+            <span>MUESTRA: <b>3 PERSONAS EN UN ANDÉN</b></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="girder" aria-hidden="true"></div>
+
+    <!-- ================= SALÓN ================= -->
+    <section class="section" id="salon" aria-labelledby="t-salon">
+      <div class="wrap">
+        <p class="kicker reveal">TABLA DE RÉCORDS · DATOS OFICIALES</p>
+        <h2 class="title reveal" id="t-salon">SALÓN DE LA DIMISIÓN</h2>
+        <p class="lead reveal">Los mejores jugadores de la historia, y los motivos por los que abandonaron la partida (ninguno fue dimitir).</p>
+        <div class="hall reveal">
+          <table>
+            <thead><tr><th>PUESTO</th><th>NOMBRE</th><th>PUNTOS</th><th>MOTIVO DE SALIDA</th></tr></thead>
+            <tbody>
+              <tr><td>1.º</td><td>ABC</td><td>9.999.999</td><td>Asumió responsabilidades. Las de otro.</td></tr>
+              <tr><td>2.º</td><td>CUL</td><td>8.750.000</td><td>La culpa era del anterior jugador.</td></tr>
+              <tr><td>3.º</td><td>OBR</td><td>7.310.000</td><td>Obras previstas. Y luego, imprevistas.</td></tr>
+              <tr><td>4.º</td><td>SIS</td><td>6.480.000</td><td>Se cayó el sistema. Otra vez.</td></tr>
+              <tr class="me"><td>5.º</td><td>TÚ</td><td>???????</td><td>Tu nombre aquí. Pulsa "Jugar" y compite.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div class="girder" aria-hidden="true"></div>
+
+    <!-- ================= MANIFIESTO ================= -->
+    <section class="section" id="manifiesto" aria-labelledby="t-man">
+      <div class="wrap">
+        <p class="kicker reveal">QUIÉNES SOMOS · SIN LETRA PEQUEÑA</p>
+        <h2 class="title reveal" id="t-man">MANIFIESTO</h2>
+        <p class="lead reveal">Somos un arcade de sátira política. Nos reímos del poder, venga de donde venga, con píxeles, barriles y mala leche. Sin carné de partido.</p>
+        <div class="manifesto">
+          <article class="man reveal"><canvas data-icon="mask" width="14" height="14" aria-hidden="true"></canvas><h3>NOS REÍMOS DE TODOS</h3><p>De arriba, de abajo, de izquierda y de derecha. Si ocupa un cargo, le toca un barril. Nadie se libra y nadie tiene bula.</p></article>
+          <article class="man reveal"><canvas data-icon="coin" width="14" height="14" aria-hidden="true"></canvas><h3>SIN PARTIDO NI SUBVENCIÓN</h3><p>Nadie nos paga ni nos dicta qué villano toca. Jugar es gratis, en el navegador y sin registro. Lo único que recogemos son tus risas.</p></article>
+          <article class="man reveal"><canvas data-icon="barrel" width="14" height="14" aria-hidden="true"></canvas><h3>CON BARRILES</h3><p>Los argumentos no se discuten: se esquivan. Cada juego convierte un cargo público en un jefe final con puntería dudosa.</p></article>
+        </div>
+        <div class="banner reveal" role="note">
+          <div><strong>AVISO: ESTO ES FICCIÓN HUMORÍSTICA</strong><span>Los personajes son caricaturas satíricas de la vida pública. Los diálogos y las situaciones son inventados. Cualquier parecido con la actualidad es, por desgracia, voluntario.</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="girder" aria-hidden="true"></div>
+  <footer>
+    <div class="wrap">
+      <p class="logo-s">SANXE GAMES</p>
+      <p>© 2026 Sanxe Games · Hecho en España con más barriles que presupuesto.</p>
+      <p>Ficción humorística y sátira. Sin afiliación política: nos reímos de todos.</p>
+      <p class="hint">Pista: ¿conoces el código de los 30 vidas? <kbd>↑ ↑ ↓ ↓ ← → ← → B A</kbd></p>
+    </div>
+  </footer>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <canvas id="rain" aria-hidden="true" hidden></canvas>
+  <div class="crt" aria-hidden="true"></div>
+
+  <script src="assets/commuter-sprites.js"></script>
+  <script src="pastor-de-socios/sprites.js?v=2"></script>
+  <script src="me-gusta-la-fruta/sprites.js?v=1"></script>
+  <script src="assets/home.js?v=15"></script>
+</body>
+</html>

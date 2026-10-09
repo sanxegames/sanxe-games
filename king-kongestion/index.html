@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101629">
+  <title>King Kongestion — Sanxe Games</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="cabinet">
+    <header>
+      <div>
+        <p class="eyebrow">SANXE GAMES PRESENTA</p>
+        <h1>KING KONGESTION</h1>
+      </div>
+      <div class="toolbar" aria-label="Opciones de partida">
+        <a class="small-button back-button" href="../" aria-label="Volver a Sanxe Games">&larr; VOLVER</a>
+        <button id="sound" class="small-button" aria-label="Activar o desactivar sonido" aria-pressed="true">SONIDO: SÍ</button>
+        <button id="pause" class="small-button" disabled>PAUSA</button>
+        <button id="restart" class="small-button" disabled>REINICIAR</button>
+      </div>
+    </header>
+
+    <section class="screen" aria-label="Videojuego King Kongestion">
+      <div class="hud">
+        <span>LÍNEA <b id="level">1</b></span>
+        <span>PUNTOS <b id="score">000000</b></span>
+        <span>RETRASO <b id="time">0 MIN</b></span>
+        <span>ABONOS <b id="lives">♥♥♥</b></span>
+      </div>
+      <p id="game-status" class="sr-only" role="status" aria-live="polite">Partida preparada.</p>
+      <canvas id="game" width="960" height="740" tabindex="0" aria-label="Área de juego" aria-describedby="game-help">Tu navegador necesita admitir Canvas para ejecutar el juego.</canvas>
+      <div id="overlay" class="overlay" aria-live="polite">
+        <div class="panel">
+          <p class="stamp">SÁTIRA PIXELADA</p>
+          <h2 id="overlay-title">¡La obra no espera!</h2>
+          <p id="overlay-text">Llegas tarde al trabajo y el Ministro de las Obras domina el andén: esquiva sus barriles y alcanza el tren de la vía 6 con el menor retraso posible. Cada línea superada acelera los barriles.</p>
+          <button id="start">EMPEZAR</button>
+          <p id="game-help" class="keys">← → mover · ↑ ↓ escaleras · ESPACIO saltar · P pausar · R reiniciar</p>
+        </div>
+      </div>
+    </section>
+
+    <nav class="touch" aria-label="Controles táctiles">
+      <button data-key="ArrowLeft" aria-label="Izquierda">◀</button>
+      <button data-key="ArrowUp" aria-label="Subir">▲</button>
+      <button data-key="ArrowDown" aria-label="Bajar">▼</button>
+      <button data-key="ArrowRight" aria-label="Derecha">▶</button>
+      <button data-key="Space" class="jump" aria-label="Saltar">SALTO</button>
+    </nav>
+
+    <footer>Una ficción humorística. Caricatura satírica sin afiliación política.</footer>
+  </main>
+  <script src="game.js?v=26"></script>
+</body>
+</html>

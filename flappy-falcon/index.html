@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1021">
+  <link rel="canonical" href="https://sanxegames.es/flappy-falcon/">
+  <meta name="description" content="Flappy Falcon: un perro piloto, un avión oficial y un cielo lleno de nubarrones de titulares. Juego de sátira política gratis en el navegador.">
+  <title>Flappy Falcon — Sanxe Games</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/PressStart2P-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+  <main class="cabinet">
+    <header>
+      <div>
+        <a class="back" href="../">&lt; SANXE GAMES</a>
+        <h1>FLAPPY FALCON</h1>
+      </div>
+      <div class="toolbar" aria-label="Opciones de partida">
+        <a class="small-button back-button" href="../" aria-label="Volver a Sanxe Games">&lt; VOLVER</a>
+        <button id="sound" class="small-button" aria-label="Activar o desactivar sonido" aria-pressed="true">SONIDO: ON</button>
+        <button id="pause" class="small-button" disabled>PAUSA</button>
+        <button id="restart" class="small-button" disabled>REINICIAR</button>
+      </div>
+    </header>
+
+    <section class="screen" aria-label="Videojuego Flappy Falcon">
+      <div class="hud">
+        <span>VIAJE <b id="trip">1</b></span>
+        <span>PUNTOS <b id="score">00000</b></span>
+        <span>VOTOS <b id="votes">00</b></span>
+        <span>TRAMO <b id="leg">0/0</b></span>
+      </div>
+      <p id="game-status" class="sr-only" role="status" aria-live="polite">Partida preparada.</p>
+      <canvas id="game" width="800" height="600" tabindex="0" aria-label="Área de juego" aria-describedby="game-help">Tu navegador necesita admitir Canvas para ejecutar el juego.</canvas>
+      <div id="overlay" class="overlay" aria-live="polite">
+        <div class="panel">
+          <p class="stamp" id="overlay-stamp">SÁTIRA PIXELADA</p>
+          <h2 id="overlay-title">FLAPPY FALCON</h2>
+          <p id="overlay-text"></p>
+          <div id="overlay-extra"></div>
+          <div id="overlay-actions" class="actions"></div>
+          <p id="game-help" class="keys">ESPACIO, ↑, W o clic/toque: dar gas · P: pausa · R: reiniciar el viaje. Cada viaje acaba con un aterrizaje: sigue las luces de la pista (más blancas = vas alto, más rojas = vas bajo) y toca suave.</p>
+        </div>
+      </div>
+    </section>
+
+    <nav class="touch" aria-label="Controles táctiles">
+      <button class="up" data-act="flap" aria-label="Dar gas">DAR GAS</button>
+    </nav>
+    <p class="touch-hint">Toca en cualquier parte del cielo para subir.</p>
+
+    <footer>Ficción humorística. Caricatura satírica sin afiliación política: nos reímos de todos.</footer>
+  </main>
+  <script src="../pastor-de-socios/sprites.js?v=2"></script>
+  <script src="audio.js?v=1"></script>
+  <script src="game.js?v=6"></script>
+</body>
+</html>

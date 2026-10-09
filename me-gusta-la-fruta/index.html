@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1021">
+  <link rel="canonical" href="https://sanxegames.es/me-gusta-la-fruta/">
+  <meta name="description" content="Me gusta la fruta: corta fruta, esquiva los impuestos y aguanta la rueda de prensa. Juego de sátira política gratis en el navegador.">
+  <title>Me gusta la fruta — Sanxe Games</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/PressStart2P-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+  <main class="cabinet">
+    <header>
+      <div>
+        <a class="back" href="../">&lt; SANXE GAMES</a>
+        <h1>ME GUSTA LA FRUTA</h1>
+      </div>
+      <div class="toolbar" aria-label="Opciones de partida">
+        <a class="small-button back-button" href="../" aria-label="Volver a Sanxe Games">&lt; VOLVER</a>
+        <button id="sound" class="small-button" aria-label="Activar o desactivar sonido" aria-pressed="true">SONIDO: ON</button>
+        <button id="pause" class="small-button" disabled>PAUSA</button>
+        <button id="restart" class="small-button" disabled>REINICIAR</button>
+      </div>
+    </header>
+
+    <section class="screen" aria-label="Videojuego Me gusta la fruta">
+      <div class="hud">
+        <span>KILOS <b id="kilos">000</b></span>
+        <span>RONDA <b id="round">1</b></span>
+        <span><span id="stat-label">VIDAS</span> <b id="stat">3</b></span>
+        <span>RÉCORD <b id="best">000</b></span>
+      </div>
+      <p id="game-status" class="sr-only" role="status" aria-live="polite">Partida preparada.</p>
+      <canvas id="game" width="800" height="600" tabindex="0" aria-label="Área de juego" aria-describedby="game-help">Tu navegador necesita admitir Canvas para ejecutar el juego.</canvas>
+      <div id="overlay" class="overlay" aria-live="polite">
+        <div class="panel">
+          <p class="stamp" id="overlay-stamp">SÁTIRA PIXELADA</p>
+          <h2 id="overlay-title">ME GUSTA LA FRUTA</h2>
+          <p id="overlay-text"></p>
+          <div id="overlay-extra"></div>
+          <div id="overlay-actions" class="actions"></div>
+          <p id="game-help" class="keys">Arrastra el ratón (o el dedo) cortando la fruta. No toques los impuestos (las bombas con un %). Con teclado: flechas para mover la cuchilla y ESPACIO mantenido para cortar. P: pausa · R: reiniciar.</p>
+        </div>
+      </div>
+    </section>
+
+    <p class="touch-hint">Desliza el dedo por encima de la fruta para cortarla.</p>
+
+    <footer>Ficción humorística. Caricatura satírica sin afiliación política: nos reímos de todos.</footer>
+  </main>
+  <script src="sprites.js?v=1"></script>
+  <script src="audio.js?v=1"></script>
+  <script src="game.js?v=3"></script>
+</body>
+</html>
