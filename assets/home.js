@@ -740,10 +740,42 @@
     if (hooks) hooks.fruit = (n, dt = .05) => { for (let i = 0; i < n; i++) t += dt; draw(); return t; };
   }
 
+  /* ---------------------------------------- miniatura de Rumbo a la Moncloa */
+  function initMoncloaThumb() {
+    const cv = $("#moncloa-thumb"); if (!cv) return;
+    const g = cv.getContext("2d"), W = cv.width, H = cv.height; g.imageSmoothingEnabled = false;
+    const B = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); };
+    const rows = [[8, "river", 1, 10, 22], [20, "river", -1, 14, 36], [32, "river", 1, 12, 28], [44, "road", -1, 11, 30], [56, "road", 1, 9, 26], [68, "road", -1, 12, 34]];
+    let t = 0, last = 0, running = false;
+    function draw() {
+      B("#1d2b53", 0, 0, W, H);
+      B("#6e5a3a", 0, 0, W, 8); for (let i = 0; i < 3; i++) { const dx = 10 + i * 42; B("#f7f0d5", dx - 2, 0, 28, 8); B("#2a1c14", dx + 4, 2, 14, 6); B("#ffd34e", dx + 5, 3, 12, 5); }
+      B("#2a63c9", 0, 8, W, 36); B("#5a8fe8", 0, 8, W, 1);
+      B("#2f6b3a", 0, 44, W, 6); B("#3d8a4b", 0, 44, W, 1);
+      B("#3a3a46", 0, 50, W, 24); for (let x = 0; x < W; x += 16) B("#ffd34e", x, 61, 8, 1);
+      B("#2f6b3a", 0, 74, W, 22);
+      rows.forEach(([y, kind, dir, w, gap], i) => {
+        const sp = (kind === "road" ? 28 : 16) * (1 + i % 3 * .3), off = (t * sp * dir) % (w + gap), cols = ["#d9465b", "#f7f0d5", "#ffb347", "#31d7c7"];
+        for (let k = -2; k < W / (w + gap) + 2; k++) {
+          const x = k * (w + gap) + off;
+          if (kind === "river") { B("#7a4a22", x, y + 1, w + 8, 9); B("#a8703a", x, y + 1, w + 8, 2); B("#f7f0d5", x + 3, y + 4, w + 2, 3); }
+          else { B(cols[(k + i + 4) % 4], x, y + 2, w, 8); B("#10131f", x + 1, y + 9, 3, 2); B("#10131f", x + w - 4, y + 9, 3, 2); B("#9bd6ff", dir > 0 ? x + w - 4 : x + 1, y + 3, 3, 3); }
+        }
+      });
+      const hop = Math.abs(Math.sin(t * 2.2)) * 3, px = 60 + Math.sin(t * .9) * 2, py = 80 - hop;
+      B("#10131f", px - 4, py + 8, 9, 2); B("#ffdcb0", px - 3, py, 7, 5); B("#bfc3cf", px - 3, py - 1, 7, 2); B("#1b3a7a", px - 4, py + 5, 9, 5); B("#d9465b", px, py + 5, 1, 4);
+    }
+    function frame(ts) { if (!running) return; t += Math.min(.05, Math.max(0, (ts - last) / 1000 || 0)); last = ts; draw(); requestAnimationFrame(frame); }
+    function start() { if (running || reduced) return; running = true; last = performance.now(); requestAnimationFrame(frame); }
+    draw();
+    if ("IntersectionObserver" in window) new IntersectionObserver(es => { if (es[0].isIntersecting) start(); else running = false; }).observe(cv); else start();
+    if (hooks) hooks.moncloa = (n, dt = .05) => { for (let i = 0; i < n; i++) t += dt; draw(); return t; };
+  }
+
   /* ---------------------------------------------------------------- init */
   fixAccents(document.body); reveals(); poll(); updateScore();
   $$("canvas[data-sil]").forEach(c => silhouette(c, c.dataset.sil));
   $$("canvas[data-icon]").forEach(c => icon(c, c.dataset.icon));
-  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb();
+  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb(); initMoncloaThumb();
   bootDone.then(typeTagline);
 })();

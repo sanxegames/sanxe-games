@@ -12,6 +12,7 @@ Minijuegos arcade de navegador con sátira política. Web estática publicada co
 - `pastor-de-socios/`: juego Pastor de socios (HTML5 canvas, sin dependencias): `sprites.js` (arte por código), `audio.js` (efectos y música chiptune) y `game.js` (lógica). Enlazado desde la portada. Con `?debug`, `window.__ps` permite simular partidas.
 - `flappy-falcon/`: juego Flappy Falcon (HTML5 canvas, sin dependencias): `audio.js` (efectos y música) y `game.js`; reutiliza `pastor-de-socios/sprites.js` para el perro. Con `?debug`, `window.__ff` permite simular vuelos.
 - `me-gusta-la-fruta/`: juego Me gusta la fruta (HTML5 canvas, sin dependencias): `sprites.js` (frutas y tajo por ángulo), `audio.js` y `game.js`. Con `?debug`, `window.__mf` permite simular partidas.
+- `rumbo-a-moncloa/`: juego Rumbo a la Moncloa (estilo Frogger, canvas sin dependencias): `audio.js` y `game.js`. Con `?debug`, `window.__rm` permite simular partidas.
 
 ## Añadir un juego
 
