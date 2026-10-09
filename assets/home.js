@@ -797,10 +797,38 @@
     if (hooks) hooks.bandera = (n, dt = .05) => { for (let i = 0; i < n; i++) t += dt; draw(); return t; };
   }
 
+  /* ---------------------------------------------- miniatura de Unidad Total */
+  function initUnidadThumb() {
+    const cv = $("#unidad-thumb"); if (!cv) return;
+    const g = cv.getContext("2d"), W = cv.width, H = cv.height; g.imageSmoothingEnabled = false;
+    const B = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); };
+    const faces = ["#efc3a0", "#c68c68", "#f5d3b8", "#9a6a4a", "#e0a982"], hairs = ["#2a1c14", "#8a8f9e", "#5a3a22", "#101629", "#d8dce8"];
+    const msgs = [["¡Todo perfecto, jefe!", 0, 0], ["¿Y si... debatimos?", 1, 1], ["Ni una crítica. Jamás.", 2, 0], ["Propongo un congreso.", 3, 1]];
+    let t = 0, last = 0, running = false;
+    function face(x, y, k) { B(hairs[k % 5], x + 1, y, 8, 3); B(faces[k % 5], x + 1, y + 2, 8, 6); B("#101629", x + 3, y + 4, 1, 2); B("#101629", x + 6, y + 4, 1, 2); B(["#17306b", "#2a2f3e", "#3a4a3a"][k % 3], x, y + 8, 10, 3); }
+    function draw() {
+      B("#0b141a", 0, 0, W, H); B("#1f2c34", 0, 0, W, 12); B("#c8323f", 3, 3, 8, 6); B("#ffd34e", 3, 5, 8, 3); B("#e9edef", 15, 4, 34, 2); B("#6b7a85", 15, 8, 24, 1);
+      const shift = Math.floor(t / 1.6) % msgs.length, ph = (t % 1.6) / 1.6;
+      for (let i = 0; i < 4; i++) {
+        const m = msgs[(i + shift) % msgs.length], y = 16 + i * 19 - (i === 0 ? ph * 4 : 0), dis = m[2] === 1, out = dis && ph > .55 && i === 1;
+        const dx = out ? (ph - .55) * 180 : 0; if (dx > 120) continue;
+        face(2 + dx * 0, y + 1, (i + shift)); B("#050814", 15 + dx - 1, y - 1, 82, 17); B(dis ? "#3a2227" : "#202c33", 15 + dx, y, 80, 15); B(["#7fdbff", "#ffb347", "#c792ea", "#7cf08a"][(i + shift) % 4], 18 + dx, y + 2, 26, 2); B("#e9edef", 18 + dx, y + 7, 40 + (m[0].length % 5) * 6, 3); B("#8d98b8", 18 + dx, y + 11, 18, 2);
+        if (out) { B("#ff4d61", 60 + dx, y + 2, 20, 6); }
+      }
+      B("#1f2c34", 0, H - 12, W, 12); B("#0b141a", 4, H - 9, W - 8, 6); B("#6b7a85", 9, H - 7, 40, 2);
+      const u = 40 + Math.sin(t * 1.3) * 20; B("#050814", W - 36, 3, 32, 7); B("#3cff7a", W - 35, 4, u / 100 * 30, 5);
+    }
+    function frame(ts) { if (!running) return; t += Math.min(.05, Math.max(0, (ts - last) / 1000 || 0)); last = ts; draw(); requestAnimationFrame(frame); }
+    function start() { if (running || reduced) return; running = true; last = performance.now(); requestAnimationFrame(frame); }
+    draw();
+    if ("IntersectionObserver" in window) new IntersectionObserver(es => { if (es[0].isIntersecting) start(); else running = false; }).observe(cv); else start();
+    if (hooks) hooks.unidad = (n, dt = .05) => { for (let i = 0; i < n; i++) t += dt; draw(); return t; };
+  }
+
   /* ---------------------------------------------------------------- init */
   fixAccents(document.body); reveals(); poll(); updateScore();
   $$("canvas[data-sil]").forEach(c => silhouette(c, c.dataset.sil));
   $$("canvas[data-icon]").forEach(c => icon(c, c.dataset.icon));
-  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb(); initMoncloaThumb(); initBanderaThumb();
+  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb(); initMoncloaThumb(); initBanderaThumb(); initUnidadThumb();
   bootDone.then(typeTagline);
 })();

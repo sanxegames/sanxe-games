@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1021">
+  <link rel="canonical" href="https://sanxegames.es/unidad-total/">
+  <meta name="description" content="Unidad Total: el grupo de mensajería del partido se llena de críticos. Expulsa a los disidentes antes de que contagien a los demás. Juego de sátira política gratis en el navegador.">
+  <title>Unidad Total — Sanxe Games</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/PressStart2P-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <main class="cabinet">
+    <header>
+      <div>
+        <a class="back" href="../">&lt; SANXE GAMES</a>
+        <h1>UNIDAD TOTAL</h1>
+      </div>
+      <div class="toolbar" aria-label="Opciones de partida">
+        <a class="small-button back-button" href="../" aria-label="Volver a Sanxe Games">&lt; VOLVER</a>
+        <button id="sound" class="small-button" aria-label="Activar o desactivar sonido" aria-pressed="true">SONIDO: ON</button>
+        <button id="pause" class="small-button" disabled>PAUSA</button>
+        <button id="restart" class="small-button" disabled>REINICIAR</button>
+      </div>
+    </header>
+
+    <section class="screen" aria-label="Videojuego Unidad Total">
+      <div class="hud">
+        <span>UNIDAD <b id="unity">100</b> %</span>
+        <span>MIEMBROS <b id="members">0</b></span>
+        <span>PUNTOS <b id="score">00000</b></span>
+        <span>RÉCORD <b id="best">0</b></span>
+      </div>
+      <p id="game-status" class="sr-only" role="status" aria-live="polite">Partida preparada.</p>
+      <canvas id="game" width="800" height="600" tabindex="0" aria-label="Chat del partido: toca o selecciona los mensajes de los disidentes para expulsarlos" aria-describedby="game-help">Tu navegador necesita admitir Canvas para ejecutar el juego.</canvas>
+      <div id="overlay" class="overlay" aria-live="polite">
+        <div class="panel">
+          <p class="stamp" id="overlay-stamp">SÁTIRA PIXELADA</p>
+          <h2 id="overlay-title">UNIDAD TOTAL</h2>
+          <p id="overlay-text"></p>
+          <div id="overlay-extra"></div>
+          <div id="overlay-actions" class="actions"></div>
+          <p id="game-help" class="keys">Toca o haz clic en el mensaje de un disidente para expulsarlo del grupo. Con teclado: ↑ ↓ para elegir mensaje y ESPACIO para expulsar · P: pausa · R: reiniciar. Ojo: expulsar a un leal te cuesta unidad.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>Ficción humorística. Caricatura satírica sin afiliación política: nos reímos de todos.</footer>
+  </main>
+  <script src="audio.js?v=1"></script>
+  <script src="game.js?v=2"></script>
+</body>
+</html>

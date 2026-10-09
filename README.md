@@ -14,6 +14,7 @@ Minijuegos arcade de navegador con sátira política. Web estática publicada co
 - `me-gusta-la-fruta/`: juego Me gusta la fruta (HTML5 canvas, sin dependencias): `sprites.js` (frutas y tajo por ángulo), `audio.js` y `game.js`. Con `?debug`, `window.__mf` permite simular partidas.
 - `rumbo-a-moncloa/`: juego Rumbo a la Moncloa (estilo Frogger con tres etapas: Galicia, Madrid y Bruselas; canvas sin dependencias): `audio.js` y `game.js`. Con `?debug`, `window.__rm` permite simular partidas.
 - `bandera-xxl/`: juego Bandera XXL (apilador tipo Stack: pedestal, bandera creciente y vista final con zoom; canvas sin dependencias): `audio.js` y `game.js`. Con `?debug`, `window.__bx` permite simular partidas.
+- `unidad-total/`: juego Unidad Total (chat del partido: expulsa a los disidentes; canvas sin dependencias): `audio.js` y `game.js`. Con `?debug`, `window.__ut` permite simular partidas.
 
 ## Añadir un juego
 
