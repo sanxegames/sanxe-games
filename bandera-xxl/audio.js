@@ -30,7 +30,11 @@
     widen() { [523, 784, 1047].forEach((f, i) => tone(f, .1, "triangle", .06, i * .06)); },
     over() { tone(294, .3, "sawtooth", .06, 0, 150); tone(220, .4, "sawtooth", .06, .25, 110); tone(147, .7, "sawtooth", .06, .55, 70); },
     best() { [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, .13, "square", .05, i * .08)); },
-    tick() { tone(1500, .03, "square", .025); }
+    tick() { tone(1500, .03, "square", .025); },
+    galope() { for (let i = 0; i < 6; i++) { tone(180, .06, "triangle", .1, i * .09 + (i % 2 ? .03 : 0), 90); noise(.04, .05, i * .09, 800); } tone(900, .3, "sawtooth", .05, .55, 1500); tone(1500, .25, "sawtooth", .04, .8, 900); },
+    sello() { tone(110, .18, "square", .12, 0, 50); noise(.1, .1, 0, 300); tone(70, .3, "triangle", .1, .05, 40); },
+    hito() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, .12, "square", .045, i * .06)); tone(1568, .4, "triangle", .06, .32); },
+    sirena() { for (let i = 0; i < 3; i++) { tone(660, .12, "square", .035, i * .26); tone(880, .12, "square", .035, i * .26 + .13); } }
   };
   function scheduleStep(i, t) {
     const sd = 60 / tempo / 4, s = i % 16, s32 = i % 32;
