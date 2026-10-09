@@ -772,10 +772,35 @@
     if (hooks) hooks.moncloa = (n, dt = .05) => { for (let i = 0; i < n; i++) t += dt; draw(); return t; };
   }
 
+  /* ---------------------------------------------- miniatura de Bandera XXL */
+  function initBanderaThumb() {
+    const cv = $("#bandera-thumb"); if (!cv) return;
+    const g = cv.getContext("2d"), W = cv.width, H = cv.height; g.imageSmoothingEnabled = false;
+    const B = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); };
+    const offs = [0, 3, -2, 2, -3, 1, -1, 2];
+    let t = 0, last = 0, running = false;
+    function draw() {
+      const sky = g.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, "#ff8a5a"); sky.addColorStop(1, "#ffd9a0"); g.fillStyle = sky; g.fillRect(0, 0, W, H);
+      B("#fff3a8", 14, 14, 14, 14); B("#ffffff", 84, 12, 22, 4); B("#ffffff", 90, 9, 12, 4); B("#ffffff", 6, 36, 18, 4);
+      for (let i = 0; i < 9; i++) { const bh = 14 + (i * 13) % 26; B("#6a3f5a", i * 15 - 4, 80 - bh, 13, bh + 20); }
+      B("#8a8f9e", 0, 82, W, 14); B("#5a5f78", 0, 82, W, 2);
+      const bw = 40; for (let i = 0; i < 8; i++) { B("#050814", 44 + offs[i] - 1, 80 - (i + 1) * 7 - 1, bw + 2, 8); B(i % 2 ? "#c8323f" : "#ffd34e", 44 + offs[i], 80 - (i + 1) * 7, bw, 6); B("rgba(255,255,255,.35)", 44 + offs[i], 80 - (i + 1) * 7, bw, 1); }
+      const sx = 22 + (Math.sin(t * 1.6) * .5 + .5) * 60, sy = 80 - 9 * 7;
+      B("#050814", sx - 1, sy - 1, bw + 2, 8); B("#c8323f", sx, sy, bw, 6);
+      const px = sx + bw / 2, top = sy - 34; B("#d8dce8", px, top, 1, 34); B("#ffd34e", px - 1, top - 2, 3, 2);
+      for (let i = 0; i < 26; i++) { const w = Math.sin(t * 6 - i * .3) * (1 + i * .08); B("#c8323f", px + 1 + i, top + 1 + w, 1, 4); B("#ffd34e", px + 1 + i, top + 5 + w, 1, 8); B("#c8323f", px + 1 + i, top + 13 + w, 1, 4); }
+    }
+    function frame(ts) { if (!running) return; t += Math.min(.05, Math.max(0, (ts - last) / 1000 || 0)); last = ts; draw(); requestAnimationFrame(frame); }
+    function start() { if (running || reduced) return; running = true; last = performance.now(); requestAnimationFrame(frame); }
+    draw();
+    if ("IntersectionObserver" in window) new IntersectionObserver(es => { if (es[0].isIntersecting) start(); else running = false; }).observe(cv); else start();
+    if (hooks) hooks.bandera = (n, dt = .05) => { for (let i = 0; i < n; i++) t += dt; draw(); return t; };
+  }
+
   /* ---------------------------------------------------------------- init */
   fixAccents(document.body); reveals(); poll(); updateScore();
   $$("canvas[data-sil]").forEach(c => silhouette(c, c.dataset.sil));
   $$("canvas[data-icon]").forEach(c => icon(c, c.dataset.icon));
-  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb(); initMoncloaThumb();
+  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb(); initMoncloaThumb(); initBanderaThumb();
   bootDone.then(typeTagline);
 })();
