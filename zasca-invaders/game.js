@@ -41,19 +41,24 @@
     { name: "LA MESA DEL CONGRESO", pat: "mesa", hp: 62, suit: "#7a1f31", tie: "#ffd34e", hair: "#d8dce8", prop: "gavel", say: "Se levanta la sesión (de usted)." }
   ];
   const HIT_SAY = ["Eso lo dirá usted.", "Pregúntele a su portavoz.", "¡Rectifique!", "Ya lo dije en un hilo.", "Mi tuit era claro, su cerebro no.", "Zasca.", "Un tuit borrado a tiempo vale por dos.", "Y encima con faltas de ortografía.", "Dígalo en la tribuna, no en el pasillo."];
-  const LOCK_SAY = ["Me han cortado el micro. Qué casualidad.", "Tres segundos más y lo arreglo.", "Esto es censura (con cronómetro)."];
+  const QUOTES = ["En 18 meses dejo el escaño. Palabra de Tribuno.", "Nos vemos en el infierno.", "¿Alguien tiene unas esposas?", "Con interrupciones, hemos hablado tres minutos de cinco."];
+  const LOCK_SAY = ["Con interrupciones, hemos hablado tres minutos de cinco.", "Me han cortado el micro. Qué casualidad.", "Esto es censura (con cronómetro).", "Tres minutos de cinco. Otra vez."];
+  const BOSS_SAY = ["Señor Moderador: hoy el martillo lo traigo yo.", "¿Alguien tiene unas esposas?", "No es un bulo, es un hilo.", "Margen de error: lo que tarde en irme (18 meses).", "Nos vemos en el infierno."];
+  const COMBO_SAY = { 8: "Esto no es un zasca, es un hilo.", 16: "En 18 meses lo dejo. Pero hoy no.", 24: "Hoy no me interrumpe ni el Moderador." };
+  const POWER_SAY = { hilo: "Esto lo tuiteo ya.", interrup: "Bulo time: que nadie se mueva.", mesa: "Esto lo pacto yo, con quien sea.", escano: "Otros 18 meses de escaño." };
+  const pickQuip = () => Math.random() < .4 ? pick(QUOTES) : pick(HIT_SAY);
   const HURT_SAY = ["Eso es un bulo.", "Me lo han sacado de contexto.", "Cancelado, pero con likes.", "Ni me enteré de la pregunta."];
   const POWERS = {
-    hilo: { name: "HILO DE TUITS", sub: "Disparo triple", col: "#31d7c7" },
-    interrup: { name: "INTERRUPCIÓN", sub: "Todos congelados", col: "#ffd34e" },
-    mesa: { name: "PREGUNTA A LA MESA", sub: "Bomba en el hemiciclo", col: "#c792ea" },
+    hilo: { name: "TUIT VIRAL", sub: "Disparo triple", col: "#2b9cf0" },
+    interrup: { name: "BULO TIME", sub: "Todos congelados", col: "#ffd34e" },
+    mesa: { name: "PACTO", sub: "Los de abajo se van a pactar", col: "#c792ea" },
     escano: { name: "UN ESCAÑO MÁS", sub: "+1 vida", col: "#3cff7a" }
   };
 
   const UI = { score: $("#score"), stage: $("#stage"), wave: $("#wave"), lives: $("#lives"), best: $("#best"), status: $("#game-status"), overlay: $("#overlay"), stamp: $("#overlay-stamp"), title: $("#overlay-title"), text: $("#overlay-text"), extra: $("#overlay-extra"), actions: $("#overlay-actions"), sound: $("#sound"), pause: $("#pause"), restart: $("#restart"), help: $("#game-help") };
   let state = "title", soundOn = store.get("zi-sound") !== "0", best = +store.get("zi-best") || 0;
   let pl, shots = [], ebul = [], shields = [], enemies = [], form = null, boss = null, ufo = null, powerups = [], particles = [], floats = [], hammers = [], bots = [], bubble = null, banner = null, bgs = [];
-  let waveWait = 0, t = 0, acc = 0, last = 0, score = 0, stage = 1, waveN = 1, loop = 0, ufoT = 12, fireT = 1, introT = 0, shakeT = 0, shakeM = 0, flashT = 0, flashCol = "#fff", combo = 0, missStreak = 0, lastKillT = -9, freezeT = 0, tripleT = 0, quipT = 6, bossT = 0, patT = 0, patIdx = 0, cause = "";
+  let volId = 0, volleys = new Map(), waveWait = 0, t = 0, acc = 0, last = 0, score = 0, stage = 1, waveN = 1, loop = 0, ufoT = 12, fireT = 1, introT = 0, shakeT = 0, shakeM = 0, flashT = 0, flashCol = "#fff", combo = 0, missStreak = 0, lastKillT = -9, freezeT = 0, tripleT = 0, quipT = 6, bossT = 0, patT = 0, patIdx = 0, cause = "";
   let stats = { shots: 0, hits: 0, maxCombo: 0, waves: 0, bosses: 0, ufos: 0 };
   const keys = { left: false, right: false, fire: false };
   const lvl = () => (stage - 1) * 3 + (waveN - 1) + loop * 15;
@@ -74,7 +79,7 @@
     pl = { x: W / 2, vx: 0, lives: 3, inv: 0, mic: 100, lock: 0, cd: 0, idle: 0, pose: 0 };
     waveWait = 0; shots = []; ebul = []; enemies = []; boss = null; ufo = null; powerups = []; particles = []; floats = []; hammers = []; bots = []; bubble = null; banner = null; form = null;
     shields = [0, 1, 2, 3].map(i => makeShield(88 + i * 186));
-    score = 0; stage = 1; waveN = 1; loop = 0; combo = 0; missStreak = 0; freezeT = 0; tripleT = 0; ufoT = rnd(10, 16); introT = 0; cause = ""; quipT = 6; lastKillT = -9;
+    score = 0; stage = 1; waveN = 1; loop = 0; combo = 0; missStreak = 0; volleys.clear(); freezeT = 0; tripleT = 0; ufoT = rnd(10, 16); introT = 0; cause = ""; quipT = 6; lastKillT = -9;
     stats = { shots: 0, hits: 0, maxCombo: 0, waves: 0, bosses: 0, ufos: 0 };
     startWave(true); waveWait = 0; if (state === "title" && form) form.oy = form.targetY; placeEnemies(); updateHud();
   }
@@ -84,7 +89,7 @@
 
   function startWave(first) {
     shots = []; ebul = []; hammers = []; bots = []; boss = null; enemies = [];
-    if (waveN === 3) { const cfg = BOSSES[(stage - 1) % 5], hp = Math.round(cfg.hp * (1 + loop * .35)); boss = { ...cfg, hp, max: hp, x: W / 2, y: -120, ty: 100, dir: 1, flash: 0, t: 0 }; patT = 2.4; patIdx = 0; introT = 2.6; banner = { text: "¡JEFE!", sub: cfg.name, t: 0, life: 2.6 }; sfx.boss(); music.setBoss(true); }
+    if (waveN === 3) { const cfg = BOSSES[(stage - 1) % 5], hp = Math.round(cfg.hp * (1 + loop * .35)); boss = { ...cfg, hp, max: hp, x: W / 2, y: -120, ty: 100, dir: 1, flash: 0, t: 0 }; patT = 2.4; patIdx = 0; introT = 2.6; banner = { text: "¡JEFE!", sub: cfg.name, t: 0, life: 2.6 }; sfx.boss(); music.setBoss(true); setTimeout(() => { if (state === "playing" && boss) say(BOSS_SAY[(stage - 1) % 5], 3); }, 1300); }
     else {
       music.setBoss(false); const n = lvl(), rows = Math.min(5, 3 + Math.floor(n / 3)), cols = Math.min(10, 7 + Math.floor(n / 4));
       for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { const b = ROWS[r % ROWS.length]; enemies.push({ r, c, b, alive: true, hp: stage >= 3 && r === 0 ? 2 : 1, x: 0, y: 0, flash: 0 }); }
@@ -128,7 +133,7 @@
   function gameOver(why) {
     state = "over"; cause = why; setControls(); music.stop(); keys.left = keys.right = keys.fire = false; const nb = score > best; if (nb) { best = score; store.set("zi-best", String(best)); setTimeout(() => sfx.best(), 600); } else sfx.over(); updateHud();
     const acc2 = stats.shots ? Math.round(stats.hits / stats.shots * 100) : 0, row = (k, v) => `<dt>${k}</dt><dd>${v}</dd>`;
-    const head = why === "invasion" ? ["SE HAN TOMADO EL ATRIL", "El hemiciclo ocupa la tribuna. Los asesores lo llaman «reordenación del debate»."] : why === "rebote" ? ["AUTOGOL: EL ZASCA REBOTÓ", "Fuentes del entorno aseguran que «el tuit estaba bien, el mundo no»."] : pick([["CANCELADO EN DIRECTO", "El Tribuno dice que borrará el tuit. Del otro."], ["SE ACABÓ EL TURNO DE PALABRA", "La Presidencia agradece su intervención. Y su silencio."], ["ELIMINADO POR UN BULO", "El bulo ya tiene 40.000 retuits. La rectificación, tres."]]);
+    const head = why === "invasion" ? ["SE HAN TOMADO EL ATRIL", "El hemiciclo ocupa la tribuna. Los asesores lo llaman «reordenación del debate»."] : why === "rebote" ? ["AUTOGOL: EL ZASCA REBOTÓ", "Fuentes del entorno aseguran que «el tuit estaba bien, el mundo no»."] : pick([["EN 18 MESES SE IBA... Y AQUÍ SIGUE", "La sesión se levanta. El escaño, no."], ["CANCELADO EN DIRECTO", "El Tribuno dice que borrará el tuit. Del otro."], ["SE ACABÓ EL TURNO DE PALABRA", "La Presidencia agradece su intervención. Y su silencio."], ["ELIMINADO POR UN BULO", "El bulo ya tiene 40.000 retuits. La rectificación, tres."]]);
     UI.status.textContent = `Fin de la sesión con ${score} likes.`;
     showOverlay({
       board: { game: "zasca-invaders", score, unit: "likes", reason: why === "invasion" ? 3 : why === "rebote" ? 4 : why === "bulo" ? 1 : pick([0, 2, 5]), lv: stage + loop * 5 }, stamp: `ACTO ${stage}${loop ? "+" : ""} · ${waveN === 3 ? "JEFE" : "OLA " + waveN}`, title: head[0], text: "",
@@ -150,7 +155,7 @@
   function fire() {
     if (state !== "playing" || pl.lock > 0 || pl.cd > 0) return; if (pl.mic < 7) return;
     pl.cd = .22; pl.mic = Math.max(0, pl.mic - 7); pl.idle = 0; pl.pose = .18; stats.shots++; sfx.shoot();
-    const y = PY - 54; if (tripleT > 0) [-1, 0, 1].forEach(d => shots.push({ x: pl.x + d * 6, y, vx: d * 80, vy: -560, hit: false })); else shots.push({ x: pl.x, y, vx: 0, vy: -580, hit: false });
+    const y = PY - 54, v = ++volId; volleys.set(v, { hit: false, counted: false }); if (tripleT > 0) [-1, 0, 1].forEach(d => shots.push({ x: pl.x + d * 6, y, vx: d * 80, vy: -560, hit: false, v })); else shots.push({ x: pl.x, y, vx: 0, vy: -580, hit: false, v });
     if (pl.mic <= 0) { pl.lock = 2.2; sfx.lock(); banner = { text: "PALABRA RETIRADA", sub: "Se le ha acabado el tiempo, señoría.", t: 0, life: 2 }; say(pick(LOCK_SAY), 2); }
   }
   function playerHit(kind) {
@@ -158,7 +163,7 @@
     if (pl.lives <= 0) { gameOver(kind === "rebote" ? "rebote" : kind === "boss" ? "boss" : "bulo"); return; } if (Math.random() < .6) say(pick(HURT_SAY), 2);
   }
   function applyPower(type, x, y) {
-    sfx.power(); const P = POWERS[type]; if (type !== "escano") float(x, y - 20, P.name, P.col, 1.5);
+    sfx.power(); const P = POWERS[type]; if (POWER_SAY[type]) say(POWER_SAY[type], 2); if (type !== "escano") float(x, y - 20, P.name, P.col, 1.5);
     if (type === "hilo") tripleT = 9; else if (type === "interrup") { freezeT = 4; sfx.freeze(); flash("#bde8ff", .2); }
     else if (type === "escano") { pl.lives = Math.min(5, pl.lives + 1); updateHud(); float(x, y - 40, "+1", "#3cff7a", 1.8, 56, true); float(x, y - 8, "UN ESCAÑO MÁS", "#3cff7a", 1.5, 20); burst(x, y, ["#3cff7a", "#f7f0d5", "#ffffff"], 18, 190); }
     else { sfx.bomb(); shake(9, .5); flash("#ffffff", .3); ebul = []; hammers = []; if (boss) { boss.hp -= 12; boss.flash = .3; if (boss.hp <= 0) bossDown(); } const rowsAlive = [...new Set(enemies.filter(e => e.alive).map(e => e.r))].sort((a, b) => b - a).slice(0, 2); for (const e of enemies) if (e.alive && rowsAlive.includes(e.r)) killEnemy(e, true); bots = []; }
@@ -167,11 +172,11 @@
   function killEnemy(e, silent) {
     e.hp--; e.flash = .12; if (e.hp > 0) { sfx.hit(1); return false; } e.alive = false; const b = BENCH[e.b]; sfx.kill(); burst(e.x, e.y, [b.tie, "#f7f0d5", "#ffd34e"], 9, 170);
     if (t - lastKillT < .35 && !silent) { score += 50; float(e.x, e.y - 30, "¡VIRAL! +50", "#31d7c7", 1); } lastKillT = t;
-    addScore(b.pts, e.x, e.y - 14); dropPower(e.x, e.y); if (Math.random() < .09 && !bubble && !silent) say(pick(HIT_SAY), 1.8); return true;
+    if (COMBO_SAY[combo]) say(COMBO_SAY[combo], 2.2); addScore(b.pts, e.x, e.y - 14); dropPower(e.x, e.y); if (Math.random() < .14 && !bubble && !silent) say(pickQuip(), 2); return true;
   }
   function bossDown() {
     if (!boss) return; stats.bosses++; sfx.bossDown(); shake(10, .7); flash("#ffffff", .4); burst(boss.x, boss.y, ["#ffd34e", "#ff4d61", "#f7f0d5", "#31d7c7"], 40, 320); score += 1000 * (loop + 1); float(boss.x, boss.y - 40, `¡JEFE FUERA! +${1000 * (loop + 1)}`, "#ffd34e", 2); dropPower(boss.x, boss.y, true);
-    boss = null; ebul = []; hammers = []; bots = []; say("Y ahora, si me permiten, un hilo.", 2.6); updateHud(); waveCleared();
+    boss = null; ebul = []; hammers = []; bots = []; say(pick(["En 18 meses lo dejo. Pero primero, otro hilo.", "Nos vemos en el infierno.", "Y ahora, si me permiten, un hilo."]), 2.6); updateHud(); waveCleared();
   }
   function waveCleared() {
     stats.waves++; score += 200; if (waveN === 3) { stage++; waveN = 1; if (stage > 5) { stage = 1; loop++; } pl.lives = Math.min(5, pl.lives + 1); } else waveN++;
@@ -215,14 +220,14 @@
     if (ufo) { ufo.x += ufo.vx * dt; ufo.face += dt * 10; if (Math.floor(t * 6) % 6 === 0 && Math.random() < .02) sfx.ufo(); if ((ufo.vx > 0 && ufo.x > W + 40) || (ufo.vx < 0 && ufo.x < -40)) ufo = null; }
     // disparos del jugador
     for (const s of shots) {
-      s.x += s.vx * dt; s.y += s.vy * dt; if (s.hit) continue;
-      if (ufo && hit(s.x, s.y, 12, 10, ufo.x, ufo.y, 40, 26)) { s.hit = true; stats.hits++; stats.ufos++; sfx.ufoHit(); const pts = pick([100, 150, 200, 300]); addScore(pts, ufo.x, ufo.y); burst(ufo.x, ufo.y, ["#31d7c7", "#f7f0d5", "#ffd34e"], 16, 220); pl.mic = Math.min(100, pl.mic + 25); dropPower(ufo.x, ufo.y, Math.random() < .6); combo++; stats.maxCombo = Math.max(stats.maxCombo, combo); say("Y la tertulia, enmudecida.", 2); ufo = null; continue; }
-      if (boss && boss.y > -20 && hit(s.x, s.y, 12, 10, boss.x, boss.y, 92, 92)) { s.hit = true; stats.hits++; boss.hp--; boss.flash = .12; sfx.hit(combo); combo++; stats.maxCombo = Math.max(stats.maxCombo, combo); pl.mic = Math.min(100, pl.mic + 6); addScore(5, s.x, s.y); burst(s.x, s.y, ["#f7f0d5", "#ffd34e"], 4, 120); if (boss.hp <= 0) bossDown(); continue; }
-      for (const e of enemies) if (e.alive && hit(s.x, s.y, 12, 10, e.x, e.y, 26, 28)) { s.hit = true; stats.hits++; combo++; stats.maxCombo = Math.max(stats.maxCombo, combo); missStreak = 0; pl.mic = Math.min(100, pl.mic + 14); if (killEnemy(e)) { } else sfx.hit(combo); break; }
-      for (const b of bots) if (!s.hit && b.alive && hit(s.x, s.y, 12, 10, b.x, b.y, 20, 20)) { s.hit = true; b.alive = false; stats.hits++; combo++; stats.maxCombo = Math.max(stats.maxCombo, combo); pl.mic = Math.min(100, pl.mic + 8); sfx.kill(); burst(b.x, b.y, ["#3cff7a", "#f7f0d5"], 6, 150); addScore(30, b.x, b.y); }
-      if (!s.hit && s.y < -12) { s.hit = true; combo = 0; missStreak++; if (missStreak >= 8) { missStreak = 0; ebul.push({ x: pl.x, y: 18, vx: 0, vy: 300, kind: "rebote", w: 16, h: 14 }); banner = { text: "¡AUTOGOL!", sub: "Tu zasca vuelve con intereses.", t: 0, life: 1.6 }; sfx.lock(); } }
+      s.x += s.vx * dt; s.y += s.vy * dt; if (s.hit) continue; const V = volleys.get(s.v);
+      if (ufo && hit(s.x, s.y, 12, 10, ufo.x, ufo.y, 40, 26)) { s.hit = true; if (V) V.hit = true; stats.hits++; stats.ufos++; sfx.ufoHit(); const pts = pick([100, 150, 200, 300]); addScore(pts, ufo.x, ufo.y); burst(ufo.x, ufo.y, ["#31d7c7", "#f7f0d5", "#ffd34e"], 16, 220); pl.mic = Math.min(100, pl.mic + 25); dropPower(ufo.x, ufo.y, Math.random() < .6); combo++; stats.maxCombo = Math.max(stats.maxCombo, combo); say("Y la tertulia, enmudecida.", 2); ufo = null; continue; }
+      if (boss && boss.y > -20 && hit(s.x, s.y, 12, 10, boss.x, boss.y, 92, 92)) { s.hit = true; if (V) V.hit = true; stats.hits++; boss.hp--; boss.flash = .12; sfx.hit(combo); combo++; stats.maxCombo = Math.max(stats.maxCombo, combo); pl.mic = Math.min(100, pl.mic + 6); addScore(5, s.x, s.y); burst(s.x, s.y, ["#f7f0d5", "#ffd34e"], 4, 120); if (boss.hp <= 0) bossDown(); continue; }
+      for (const e of enemies) if (e.alive && hit(s.x, s.y, 12, 10, e.x, e.y, 26, 28)) { s.hit = true; if (V) V.hit = true; stats.hits++; combo++; stats.maxCombo = Math.max(stats.maxCombo, combo); missStreak = 0; pl.mic = Math.min(100, pl.mic + 14); if (killEnemy(e)) { } else sfx.hit(combo); break; }
+      for (const b of bots) if (!s.hit && b.alive && hit(s.x, s.y, 12, 10, b.x, b.y, 20, 20)) { s.hit = true; if (V) V.hit = true; b.alive = false; stats.hits++; combo++; stats.maxCombo = Math.max(stats.maxCombo, combo); pl.mic = Math.min(100, pl.mic + 8); sfx.kill(); burst(b.x, b.y, ["#3cff7a", "#f7f0d5"], 6, 150); addScore(30, b.x, b.y); }
+      if (!s.hit && s.y < -12) { s.hit = true; if (V && (V.hit || V.counted)) continue; if (V) V.counted = true; combo = 0; missStreak++; if (missStreak >= 5 && missStreak < 8) float(pl.x, PY - 96, `¡AUTOGOL EN ${8 - missStreak}!`, "#ffb347", 1.1, 22); if (missStreak >= 8) { missStreak = 0; ebul.push({ x: pl.x, y: 18, vx: 0, vy: 300, kind: "rebote", w: 16, h: 14 }); banner = { text: "¡AUTOGOL!", sub: "Tu zasca vuelve con intereses.", t: 0, life: 1.6 }; sfx.lock(); } }
     }
-    shots = shots.filter(s => !s.hit); bots = bots.filter(b => b.alive);
+    shots = shots.filter(s => !s.hit); if (!shots.length) volleys.clear(); bots = bots.filter(b => b.alive);
     // disparos enemigos
     const slow = freezeT > 0 ? .4 : 1;
     for (const b of ebul) {
@@ -234,7 +239,7 @@
     // powerups
     for (const p of powerups) { p.y += p.vy * dt; if (hit(p.x, p.y, 30, 30, pl.x, PY - 26, 28, 46)) { p.dead = true; applyPower(p.type, p.x, p.y); } if (p.y > H + 20) p.dead = true; } powerups = powerups.filter(p => !p.dead);
     // quips
-    quipT -= dt; if (quipT <= 0 && !bubble) { quipT = rnd(12, 20); say(pick(HIT_SAY)); }
+    quipT -= dt; if (quipT <= 0 && !bubble) { quipT = rnd(7, 12); say(pickQuip()); }
     for (const p of particles) { p.t += dt; p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; } particles = particles.filter(p => p.t < p.life);
     for (const f of floats) { f.t += dt; f.y -= 28 * dt; } floats = floats.filter(f => f.t < f.life);
   }
@@ -309,18 +314,20 @@
     const bg = { hilo: "#2b9cf0", interrup: "#ffd34e", mesa: "#c792ea", escano: "#3cff7a" }[p.type];
     ctx.save(); ctx.translate(X, Y); ctx.scale(1.45, 1.45); const x = 0, y = 0;
     R("#050814", x - 13, y - 13, 26, 26); R(bg, x - 11, y - 11, 22, 22); R("rgba(255,255,255,.35)", x - 11, y - 11, 22, 3);
-    if (p.type === "hilo") {            // pajarito de tuit sobre fondo azul
-      R("#ffffff", x - 10, y - 7, 3, 2); R("#ffffff", x - 9, y - 5, 3, 2); R("#ffffff", x - 7, y - 3, 11, 6); R("#ffffff", x - 5, y + 3, 8, 3); R("#ffffff", x - 2, y + 6, 4, 1);
-      R("#ffffff", x + 2, y - 8, 6, 6); R("#ffffff", x + 4, y - 10, 2, 2); R("#ffffff", x + 8, y - 6, 3, 2);
-      R("#2b9cf0", x - 5, y - 1, 7, 1); R("#2b9cf0", x - 3, y + 1, 6, 1); R("#050814", x + 5, y - 6, 1, 2);
+    if (p.type === "hilo") {            // pajarito negro de tuit sobre fondo azul
+      const K = "#0b0b0b"; R(K, x - 10, y - 7, 3, 2); R(K, x - 9, y - 5, 3, 2); R(K, x - 7, y - 3, 11, 6); R(K, x - 5, y + 3, 8, 3); R(K, x - 2, y + 6, 4, 1);
+      R(K, x + 2, y - 8, 6, 6); R(K, x + 4, y - 10, 2, 2); R(K, x + 8, y - 6, 3, 2);
+      R("#2b9cf0", x - 5, y - 1, 7, 1); R("#2b9cf0", x - 3, y + 1, 6, 1); R("#ffffff", x + 5, y - 6, 1, 2);
     }
     else if (p.type === "interrup") { R("#050814", x - 1, y - 7, 2, 8); R("#050814", x - 1, y, 6, 2); R("#050814", x - 7, y - 8, 14, 1); R("#050814", x - 7, y + 7, 14, 1); R("#050814", x - 8, y - 7, 1, 14); R("#050814", x + 7, y - 7, 1, 14); }
-    else if (p.type === "mesa") {       // signo de interrogación: pregunta a la mesa
-      R("#050814", x - 4, y - 8, 7, 2); R("#050814", x - 5, y - 6, 2, 2); R("#050814", x + 2, y - 6, 3, 3); R("#050814", x + 1, y - 3, 3, 2); R("#050814", x - 1, y - 1, 3, 3); R("#050814", x - 1, y + 4, 3, 3); R("#ffffff", x + 6, y - 9, 1, 4); R("#ffffff", x + 5, y - 8, 3, 1);
+    else if (p.type === "mesa") {       // apretón de manos: pacto
+      R("#26304a", x - 11, y - 3, 6, 8); R("#7a1f31", x + 5, y - 3, 6, 8); R("#f7f0d5", x - 6, y - 3, 1, 8); R("#f7f0d5", x + 5, y - 3, 1, 8);
+      R("#efc3a0", x - 5, y - 4, 10, 9); R("#efc3a0", x - 2, y - 7, 6, 3); R("#c0865f", x - 3, y - 1, 1, 4); R("#c0865f", x - 1, y - 1, 1, 4); R("#c0865f", x + 1, y - 1, 1, 4); R("#050814", x - 5, y + 5, 10, 1);
+      R("#ffffff", x + 7, y - 10, 1, 4); R("#ffffff", x + 6, y - 9, 3, 1);
     }
     else { R("#050814", x - 7, y - 6, 5, 5); R("#050814", x + 2, y - 6, 5, 5); R("#050814", x - 6, y - 2, 12, 4); R("#050814", x - 4, y + 2, 8, 3); R("#050814", x - 2, y + 5, 4, 2); }
     ctx.restore();
-    outlinedText({ hilo: "HILO", interrup: "HIELO", mesa: "PREGUNTA", escano: "+1 VIDA" }[p.type], X, Y + 36, "#f7f0d5", `16px ${FONT_T}`);
+    outlinedText({ hilo: "TUIT VIRAL", interrup: "BULO TIME", mesa: "PACTO", escano: "+1 VIDA" }[p.type], X, Y + 36, "#f7f0d5", `16px ${FONT_T}`);
   }
   function buildBg(ti) {
     const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"), B = (col, x, y, w, h) => gr(g, col, x, y, w, h);
@@ -352,8 +359,10 @@
     // turno de palabra
     R("rgba(5,8,20,.85)", 0, H - 26, W, 26); outlinedText("TURNO DE PALABRA", 10, H - 8, pl.lock > 0 ? "#ff4d61" : "#f7f0d5", `17px ${FONT_T}`, "left");
     R("#050814", 150, H - 21, 202, 14); R("#17213c", 152, H - 19, 198, 10); const mc = pl.lock > 0 ? "#ff4d61" : pl.mic < 25 ? "#ffb347" : "#31d7c7"; R(mc, 152, H - 19, 198 * clamp(pl.mic / 100, 0, 1), 10); for (let k = 1; k < 5; k++) R("#050814", 152 + k * 39.6, H - 19, 1, 10);
-    if (combo >= 2) outlinedText(`RACHA x${multNow()} · ${combo}`, 372, H - 8, "#ffd34e", `17px ${FONT_T}`, "left");
-    let px = W - 10; if (tripleT > 0) { outlinedText(`HILO ${tripleT.toFixed(0)}`, px, H - 8, "#31d7c7", `17px ${FONT_T}`, "right"); px -= 90; } if (freezeT > 0) outlinedText(`HIELO ${freezeT.toFixed(0)}`, px, H - 8, "#bde8ff", `17px ${FONT_T}`, "right");
+    outlinedText("AUTOGOL", 366, H - 8, missStreak >= 5 ? "#ff4d61" : "#aab4d5", `15px ${FONT_T}`, "left");
+    for (let k = 0; k < 8; k++) { const on = k < missStreak, blink = missStreak >= 6 && Math.floor(t * 8) % 2; R("#050814", 428 + k * 12, H - 21, 10, 14); R(on ? (blink ? "#ffffff" : missStreak >= 6 ? "#ff4d61" : "#ffb347") : "#17213c", 429 + k * 12, H - 20, 8, 12); }
+    if (combo >= 2) outlinedText(`RACHA x${multNow()} · ${combo}`, 540, H - 8, "#ffd34e", `16px ${FONT_T}`, "left");
+    let px = W - 10; if (tripleT > 0) { outlinedText(`TUIT VIRAL ${tripleT.toFixed(0)}`, px, H - 8, "#5bb8ff", `17px ${FONT_T}`, "right"); px -= 128; } if (freezeT > 0) outlinedText(`BULO TIME ${freezeT.toFixed(0)}`, px, H - 8, "#ffd34e", `17px ${FONT_T}`, "right");
     if (boss) { const bw = 360, k = clamp(boss.hp / boss.max, 0, 1); R("#050814", W / 2 - bw / 2 - 3, 8, bw + 6, 16); R("#17213c", W / 2 - bw / 2, 11, bw, 10); R(k < .3 ? "#ff4d61" : "#ffd34e", W / 2 - bw / 2, 11, bw * k, 10); outlinedText(boss.name, W / 2, 42, "#f7f0d5", `16px ${FONT_T}`); }
   }
   function render() {
@@ -426,7 +435,7 @@
   requestAnimationFrame(frame);
 
   if (DEBUG) {
-    const snap = () => ({ state, stage, wave: waveN, loop, score, lives: pl && pl.lives, mic: pl && Math.round(pl.mic), lock: pl && +pl.lock.toFixed(1), alive: enemies.filter(e => e.alive).length, boss: boss && boss.hp, ebul: ebul.length, combo, shots: stats.shots, hits: stats.hits, waves: stats.waves, intro: +introT.toFixed(1), tr: tripleT > 0, ufo: !!ufo });
+    const snap = () => ({ state, stage, wave: waveN, loop, score, lives: pl && pl.lives, mic: pl && Math.round(pl.mic), lock: pl && +pl.lock.toFixed(1), alive: enemies.filter(e => e.alive).length, boss: boss && boss.hp, ebul: ebul.length, combo, miss: missStreak, shots: stats.shots, hits: stats.hits, waves: stats.waves, intro: +introT.toFixed(1), tr: tripleT > 0, ufo: !!ufo });
     window.__zi = {
       step: (k = 1, dt = FIXED, draw = true) => { for (let i = 0; i < k; i++) update(dt); if (draw) render(); return snap(); }, snap, play, render, title: titleScreen, over: why => gameOver(why || "bulo"),
       setStage: (s, w) => { stage = s; waveN = w; startWave(); updateHud(); }, give: type => applyPower(type, pl.x, 300), setScore: n => { score = n; updateHud(); }, spawnPower: (type, x, y, vy = 0) => { powerups.push({ x, y, type, vy }); }, key: (k, v) => { keys[k] = v; }, setMic: n => { pl.mic = n; }, kill: () => { enemies.forEach(e => { e.alive = false; }); if (boss) { boss.hp = 0; bossDown(); } }, ebul: () => ebul.length,
