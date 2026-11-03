@@ -16,6 +16,7 @@ const GAMES = {
 };
 const ORIGINS = new Set(["https://sanxegames.es", "https://www.sanxegames.es", "http://localhost:8149", "http://127.0.0.1:8149"]);
 const BLOCK = new Set(["ASS", "CUM", "FAG", "FUC", "FUK", "KKK", "NIG", "NZI", "SEX", "TIT", "PTA", "PUT", "PUS"]);
+const BOT = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|node/i;
 const MIN_AGE = 4000, MAX_AGE = 6 * 3600 * 1000, HOUR_LIMIT = 12, DAY_LIMIT = 40;
 
 const enc = new TextEncoder();
@@ -58,6 +59,17 @@ export default {
         const game = url.searchParams.get("game"); if (!GAMES[game]) return fail(req, "game");
         const limit = Math.max(1, Math.min(50, parseInt(url.searchParams.get("limit") || "10", 10) || 10));
         return json(req, { ok: true, game, unit: GAMES[game].unit, scores: await top(env, game, limit) }, 200, { "Cache-Control": "public, max-age=20" });
+      }
+      if (path === "/visits" && req.method === "GET") { const r = await env.DB.prepare("SELECT n FROM counters WHERE k = 'visits'").first(); return json(req, { ok: true, total: r ? r.n : 0 }, 200, { "Cache-Control": "public, max-age=60" }); }
+      if (path === "/hit" && req.method === "POST") {   // visitante único por día: hash anónimo de IP+navegador+día (se borra a los 2 días)
+        const ua = req.headers.get("User-Agent") || "";
+        if (ua && !BOT.test(ua)) {
+          const ip = req.headers.get("CF-Connecting-IP") || "0", day = new Date().toISOString().slice(0, 10), h = (await sha(ip + "|" + ua + "|" + day + "|" + env.SIGNING_SECRET)).slice(0, 20);
+          const ins = await env.DB.prepare("INSERT OR IGNORE INTO visits (day, h) VALUES (?1, ?2)").bind(day, h).run();
+          if (ins.meta && ins.meta.changes > 0) await env.DB.prepare("INSERT INTO counters (k, n) VALUES ('visits', 1) ON CONFLICT(k) DO UPDATE SET n = n + 1").run();
+          if (Math.random() < .03) await env.DB.prepare("DELETE FROM visits WHERE day < ?1").bind(new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10)).run();
+        }
+        const r = await env.DB.prepare("SELECT n FROM counters WHERE k = 'visits'").first(); return json(req, { ok: true, total: r ? r.n : 0 });
       }
       if (req.method === "GET" && path === "/boards") return json(req, { ok: true, boards: Object.entries(GAMES).map(([id, g]) => ({ id, label: g.label, unit: g.unit })) }, 200, { "Cache-Control": "public, max-age=3600" });
       if (req.method === "POST" && path === "/start") {

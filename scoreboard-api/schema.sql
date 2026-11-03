@@ -12,3 +12,7 @@ CREATE TABLE IF NOT EXISTS scores (
 );
 CREATE INDEX IF NOT EXISTS idx_scores_game ON scores (game, score DESC, ts ASC);
 CREATE INDEX IF NOT EXISTS idx_scores_iph ON scores (iph, ts);
+
+-- Contador de visitantes únicos por día (sin cookies): se guarda un hash anónimo por día para no contar dos veces; se borra a los 2 días.
+CREATE TABLE IF NOT EXISTS visits (day TEXT NOT NULL, h TEXT NOT NULL, PRIMARY KEY (day, h));
+CREATE TABLE IF NOT EXISTS counters (k TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0);

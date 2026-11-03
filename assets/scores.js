@@ -74,5 +74,12 @@
     const rows = (j.scores || []).map(r => `<tr${r.name === name && r.score === Math.round(o.score) ? ' class="me"' : ""}><td>${r.rank}.º</td><td>${r.name}</td><td>${fmt(r.score)}</td></tr>`).join("");
     box.innerHTML = `<p class="sgs-t">¡EN EL SALÓN! PUESTO ${j.rank}.º</p><p class="sgs-sub">${name} · ${fmt(o.score)} ${unit}</p><table class="sgs-top" aria-label="Mejores puntuaciones">${rows}</table><p class="sgs-sub" style="margin-top:8px"><a href="${/\/$/.test(location.pathname) ? "../" : "./"}#salon">Ver el Salón completo</a></p>`;
   }
-  window.SGS = { api: API, boards: BOARDS, begin, attach, top, fmt, enabled: !!API };
+  /* Contador de visitantes: una vez al día por navegador se avisa al servidor (sin cookies); devuelve el total acumulado. */
+  function hit() {
+    if (!API) return Promise.resolve(null); const day = new Date().toISOString().slice(0, 10), seen = store.get("sgs-hit") === day;
+    return fetch(API + (seen ? "/visits" : "/hit"), { method: seen ? "GET" : "POST" }).then(r => r.json()).then(j => { if (j && j.ok) { if (!seen) store.set("sgs-hit", day); return j.total; } return null; }).catch(() => null);
+  }
+  const paintVisits = () => { const el = document.getElementById("hud-visits"); hit().then(n => { if (el && n != null) el.textContent = String(n).padStart(7, "0"); }); };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", paintVisits); else paintVisits();
+  window.SGS = { api: API, hit, boards: BOARDS, begin, attach, top, fmt, enabled: !!API };
 })();
