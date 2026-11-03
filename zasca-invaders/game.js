@@ -115,12 +115,12 @@
     g.strokeStyle = "#050814"; g.lineWidth = 3; g.strokeRect(1.5, 1.5, 173, 101);
     box.appendChild(cv);
     const dl = document.createElement("dl");
-    [["CANDIDATO", "EL TRIBUNO"], ["ARMA", "EL TUIT AFILADO"], ["LEMA", "«ESO LO DIRÁ USTED»"], ["SUPERPODER", "BORRAR TUITS A TIEMPO"], ["PUNTO DÉBIL", "SU TURNO DE PALABRA"], ["ENEMIGO", "TODO EL HEMICICLO (Y LA TERTULIA)"]].forEach(([k, v]) => { const dt = document.createElement("dt"), dd = document.createElement("dd"); dt.textContent = k; dd.textContent = v; dl.append(dt, dd); });
+    [["CANDIDATO", "RUFIÁN, EL TRIBUNO"], ["ARMA", "EL TUIT AFILADO"], ["LEMA", "«ESO LO DIRÁ USTED»"], ["SUPERPODER", "BORRAR TUITS A TIEMPO"], ["PUNTO DÉBIL", "SU TURNO DE PALABRA"], ["ENEMIGO", "TODO EL HEMICICLO (Y LA TERTULIA)"]].forEach(([k, v]) => { const dt = document.createElement("dt"), dd = document.createElement("dd"); dt.textContent = k; dd.textContent = v; dl.append(dt, dd); });
     box.appendChild(dl); return box;
   }
   function titleScreen() {
     state = "title"; setControls(); music.stop();
-    showOverlay({ help: true, stamp: "SESIÓN PLENARIA · TURNO ABIERTO", title: "ZASCA INVADERS", text: `El hemiciclo avanza hacia tu atril. Lanza zascas para frenar a los portavoces, pero ojo: cada disparo gasta tu turno de palabra y solo acertar lo recarga.${best ? ` Récord: ${fmt(best)} likes.` : ""}`, extra: posterNode(), actions: [{ label: "TOMAR LA PALABRA", fn: play }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
+    showOverlay({ help: true, stamp: "SESIÓN PLENARIA · TURNO ABIERTO", title: "ZASCA INVADERS", text: `Eres Rufián, el Tribuno, y el hemiciclo avanza hacia tu atril. Lanza zascas para frenar a los portavoces, pero ojo: cada disparo gasta tu turno de palabra y solo acertar lo recarga.${best ? ` Récord: ${fmt(best)} likes.` : ""}`, extra: posterNode(), actions: [{ label: "TOMAR LA PALABRA", fn: play }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
   }
   function play() { if (window.SGS) SGS.begin("zasca-invaders"); state = "playing"; reset(); hideOverlay(); setControls(); AUD.unlock(); if (soundOn) music.start(0); UI.status.textContent = "Defiende el atril lanzando zascas."; safe(() => canvas.focus({ preventScroll: true })); acc = 0; last = performance.now(); }
   function pauseScreen() { if (state !== "playing") return; state = "paused"; setControls(); music.pause(true); keys.left = keys.right = keys.fire = false; showOverlay({ help: true, stamp: "SESIÓN SUSPENDIDA", title: "PAUSA", text: "La Presidencia decreta un receso. Nadie lo respeta.", actions: [{ label: "SEGUIR", fn: resume }, { label: "REINICIAR", secondary: true, fn: play }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] }); }
