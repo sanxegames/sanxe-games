@@ -150,7 +150,7 @@ function showEnd(){
   state="lost";updateControls();UI.title.textContent="Servicio suspendido";
   UI.text.textContent=`Comunicado oficial: el incidente en la línea ${level} no ha revestido gravedad. Puntuación: ${score}.`;
   UI.status.textContent=`Servicio suspendido en la línea ${level}. ${score} puntos.`;
-  UI.start.textContent="JUGAR DE NUEVO";UI.overlay.classList.remove("hidden");if(window.SGS){const ex=document.querySelector("#overlay-extra");ex.innerHTML="";SGS.attach(ex,{game:"king-kongestion",score,unit:"puntos",reason:Math.floor(Math.random()*6),lv:level});}releaseInputs();requestAnimationFrame(()=>UI.start.focus());beep(130,.25);
+  UI.start.textContent="JUGAR DE NUEVO";UI.overlay.classList.remove("hidden");if(window.SGS){const ex=document.querySelector("#overlay-extra");ex.innerHTML="";SGS.attach(ex,{game:"king-kongestion",score,unit:"puntos",reason:Math.floor(Math.random()*6),lv:level,headline:"Servicio suspendido en la línea "+level+". Cero retrasos registrados."});}releaseInputs();requestAnimationFrame(()=>UI.start.focus());beep(130,.25);
 }
 function loseLife(){
   if(player.invuln>0)return false;

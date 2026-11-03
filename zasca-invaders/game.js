@@ -105,7 +105,7 @@
     if (typeof extra === "string") UI.extra.innerHTML = extra; else { UI.extra.innerHTML = ""; UI.extra.appendChild(extra); }
     UI.actions.innerHTML = "";
     actions.forEach((a, i) => { const b = document.createElement("button"); b.type = "button"; b.className = "btn" + (a.secondary ? " secondary" : ""); b.textContent = a.label; b.addEventListener("click", a.fn); UI.actions.appendChild(b); if (i === 0) requestAnimationFrame(() => b.focus()); });
-    if (board && window.SGS) SGS.attach(UI.extra, board);
+    if (board && window.SGS) SGS.attach(UI.extra, Object.assign({ headline: title }, board));
     UI.overlay.classList.remove("hidden"); fixAccents(UI.overlay);
   }
   const hideOverlay = () => UI.overlay.classList.add("hidden");

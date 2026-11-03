@@ -25,6 +25,10 @@ const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")
 async function hmac(secret, data) { const k = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); return b64u(await crypto.subtle.sign("HMAC", k, enc.encode(data))); }
 async function sha(s) { return [...new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(s)))].map(b => b.toString(16).padStart(2, "0")).join(""); }
 const nowMs = () => Date.now();
+const today = () => new Date().toISOString().slice(0, 10);
+const upsertEv = (env, k) => env.DB.prepare("INSERT INTO ev (day, k, n) VALUES (?1, ?2, 1) ON CONFLICT(day, k) DO UPDATE SET n = n + 1").bind(today(), k).run();
+const EVENTS = new Set(["play", "over", "share", "reto"]);
+const esc = x => String(x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 function corsHeaders(req) {
   const o = req.headers.get("Origin"), h = { "Vary": "Origin", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Max-Age": "86400" };
@@ -66,10 +70,30 @@ export default {
         if (ua && !BOT.test(ua)) {
           const ip = req.headers.get("CF-Connecting-IP") || "0", day = new Date().toISOString().slice(0, 10), h = (await sha(ip + "|" + ua + "|" + day + "|" + env.SIGNING_SECRET)).slice(0, 20);
           const ins = await env.DB.prepare("INSERT OR IGNORE INTO visits (day, h) VALUES (?1, ?2)").bind(day, h).run();
-          if (ins.meta && ins.meta.changes > 0) await env.DB.prepare("INSERT INTO counters (k, n) VALUES ('visits', 1) ON CONFLICT(k) DO UPDATE SET n = n + 1").run();
+          if (ins.meta && ins.meta.changes > 0) {
+            await env.DB.prepare("INSERT INTO counters (k, n) VALUES ('visits', 1) ON CONFLICT(k) DO UPDATE SET n = n + 1").run();
+            const ref = (url.searchParams.get("r") || "").toLowerCase(); await upsertEv(env, "visit"); await upsertEv(env, "ref:" + (/^[a-z0-9.-]{1,60}$/.test(ref) ? ref : "directo"));
+          }
           if (Math.random() < .03) await env.DB.prepare("DELETE FROM visits WHERE day < ?1").bind(new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10)).run();
         }
         const r = await env.DB.prepare("SELECT n FROM counters WHERE k = 'visits'").first(); return json(req, { ok: true, total: r ? r.n : 0 });
+      }
+      if (path === "/ev" && req.method === "POST") {   // métricas anónimas: solo contadores por día
+        const ua = req.headers.get("User-Agent") || "", e = url.searchParams.get("e"), g = url.searchParams.get("g") || "";
+        if (ua && !BOT.test(ua) && EVENTS.has(e) && (g === "web" || GAMES[g])) await upsertEv(env, e + ":" + g);
+        return json(req, { ok: true });
+      }
+      if (path === "/stats" && req.method === "GET") {   // panel privado (clave en el secreto STATS_KEY)
+        if (!env.STATS_KEY || url.searchParams.get("k") !== env.STATS_KEY) return new Response("No", { status: 404 });
+        const days = (await env.DB.prepare("SELECT day, n FROM ev WHERE k = 'visit' ORDER BY day DESC LIMIT 14").all()).results;
+        const all = (await env.DB.prepare("SELECT k, SUM(n) AS n, SUM(CASE WHEN day >= date('now','-7 day') THEN n ELSE 0 END) AS w, SUM(CASE WHEN day = date('now') THEN n ELSE 0 END) AS d FROM ev GROUP BY k").all()).results;
+        const by = {}; all.forEach(r => { by[r.k] = r; });
+        const cell = (k, f) => by[k] ? by[k][f] : 0;
+        const rows = Object.keys(GAMES).map(g => `<tr><td>${esc(GAMES[g].label)}</td>${["play", "over", "share", "reto"].map(e => `<td>${cell(e + ":" + g, "d")} / ${cell(e + ":" + g, "w")} / ${cell(e + ":" + g, "n")}</td>`).join("")}</tr>`).join("");
+        const refs = all.filter(r => r.k.startsWith("ref:")).sort((a, b) => b.n - a.n).slice(0, 20).map(r => `<tr><td>${esc(r.k.slice(4))}</td><td>${r.d}</td><td>${r.w}</td><td>${r.n}</td></tr>`).join("");
+        const total = (await env.DB.prepare("SELECT n FROM counters WHERE k = 'visits'").first());
+        const html = `<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>Sanxe stats</title><style>body{background:#0b1021;color:#f7f0d5;font:18px/1.3 monospace;margin:24px}h1{color:#ffd34e}h2{color:#31d7c7;margin-top:28px}table{border-collapse:collapse}td,th{border:1px solid #27345b;padding:6px 12px;text-align:left}th{color:#aab4d5}</style><h1>SANXE GAMES · estadísticas</h1><p>Visitantes únicos (acumulado): <b>${total ? total.n : 0}</b> · valores como hoy / 7 días / total</p><h2>Visitantes por día</h2><table><tr><th>Día</th><th>Visitantes</th></tr>${days.map(r => `<tr><td>${r.day}</td><td>${r.n}</td></tr>`).join("")}</table><h2>Juegos</h2><table><tr><th>Juego</th><th>Partidas iniciadas</th><th>Partidas terminadas</th><th>Compartidos</th><th>Retos abiertos</th></tr>${rows}</table><p>Compartidos de la portada: ${cell("share:web", "d")} / ${cell("share:web", "w")} / ${cell("share:web", "n")}</p><h2>Orígenes de las visitas</h2><table><tr><th>Origen</th><th>Hoy</th><th>7 días</th><th>Total</th></tr>${refs || "<tr><td colspan=4>Aún sin datos</td></tr>"}</table>`;
+        return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
       }
       if (req.method === "GET" && path === "/boards") return json(req, { ok: true, boards: Object.entries(GAMES).map(([id, g]) => ({ id, label: g.label, unit: g.unit })) }, 200, { "Cache-Control": "public, max-age=3600" });
       if (req.method === "POST" && path === "/start") {

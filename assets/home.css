@@ -277,3 +277,9 @@ footer .hint kbd{font:400 .5rem/1 var(--px);color:var(--cyan)}
 .ac.n::after{left:calc(50% - .17em);width:.14em;height:.12em;transform:none;box-shadow:.2em -.09em 0 currentColor}
 .ac.u::after{left:calc(50% - .21em);width:.14em;height:.14em;transform:none;box-shadow:.28em 0 0 currentColor}
 footer .hint kbd{font:400 1.1rem/1 var(--term);color:var(--cyan)}
+
+/* ---------- Compartir la web ---------- */
+.share-site{padding:14px 18px;border:0;background:var(--red);color:#fff;font:400 .6rem/1.3 var(--px);cursor:pointer;box-shadow:0 0 0 4px var(--deep),0 6px 0 4px var(--red-d),0 6px 0 8px var(--deep)}
+.share-site:hover{background:#ff7384}
+.share-site:active{transform:translateY(4px)}
+#share-msg{margin-left:10px;color:var(--cyan)}

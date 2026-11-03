@@ -1,0 +1,18 @@
+/* Sanxe Games — pantalla completa y ayudas para móvil (compartido por todos los juegos) */
+#fs{display:none}
+@media (hover:none),(max-width:760px){#fs{display:inline-block}}
+.fs-exit{display:none}
+.rot-hint{display:none;margin:0 0 10px;color:#8d99be;font:400 1.15rem/1.2 "VT323",monospace;text-align:center}
+@media (hover:none) and (orientation:portrait){.rot-hint{display:block}}
+body.fs{overflow:hidden}
+body.fs .cabinet{position:fixed;inset:0;z-index:50;width:100vw;max-width:none;height:100dvh;margin:0;padding:4px;display:flex;flex-direction:column;background:#050814}
+body.fs header,body.fs footer,body.fs .sgs-reto-banner,body.fs .rot-hint{display:none!important}
+body.fs .screen{flex:1 1 auto;min-height:0;margin:0;display:flex;flex-direction:column;align-items:center;border-width:3px}
+body.fs .screen .hud{align-self:stretch;flex:0 0 auto}
+body.fs .screen canvas{flex:0 0 auto;margin:auto}
+body.fs .dpad,body.fs .touch{flex:0 0 auto;margin-top:4px}
+body.fs .dpad button,body.fs .touch button{min-height:52px}
+body.fs .fs-exit{display:block;position:fixed;top:8px;right:8px;z-index:60;padding:8px 10px;border:3px solid #3b4a7a;background:#0b1126d9;color:#f7f0d5;font:400 .5rem/1 "Press Start 2P",monospace;cursor:pointer}
+body.fs .overlay{position:absolute}
+body.fs .screen .hud{padding-right:92px}
+body.fs .screen{width:100%!important;max-width:none!important;margin:0!important}

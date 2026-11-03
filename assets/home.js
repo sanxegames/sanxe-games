@@ -875,6 +875,8 @@
     if ("IntersectionObserver" in window) new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { start(); o.disconnect(); } }, { rootMargin: "200px" }).observe(tabs); else start();
   }
 
+  const shareBtn = $("#share-site"); if (shareBtn && window.SGS) shareBtn.addEventListener("click", () => SGS.shareSite($("#share-msg")));
+
   /* ---------------------------------------------------------------- init */
   fixAccents(document.body); reveals(); poll(); updateScore();
   $$("canvas[data-sil]").forEach(c => silhouette(c, c.dataset.sil));
