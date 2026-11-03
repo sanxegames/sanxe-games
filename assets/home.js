@@ -825,6 +825,31 @@
     if (hooks) hooks.unidad = (n, dt = .05) => { for (let i = 0; i < n; i++) t += dt; draw(); return t; };
   }
 
+  /* ---------------------------------------------- miniatura de Zasca Invaders */
+  function initZascaThumb() {
+    const cv = $("#zasca-thumb"); if (!cv) return;
+    const g = cv.getContext("2d"), W = cv.width, H = cv.height; g.imageSmoothingEnabled = false;
+    const B = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); };
+    const ties = ["#d9465b", "#2b6cff", "#ffb347", "#c792ea"], hair = ["#2a1c14", "#8a8f9e", "#5a3a22", "#d8dce8"];
+    let t = 0, last = 0, running = false, shots = [];
+    function person(x, y, k, fr) { B("#050814", x - 6, y - 7, 12, 14); B("#26304a", x - 5, y, 10, 6); B(ties[k], x, y, 1, 5); B("#efc3a0", x - 3, y - 6, 6, 6); B(hair[k], x - 4, y - 7, 8, 2); B("#050814", x - 2, y - 4, 1, 1); B("#050814", x + 1, y - 4, 1, 1); if (fr) { B("#26304a", x - 7, y - 4, 2, 5); B("#26304a", x + 5, y - 4, 2, 5); B("#f7f0d5", x + 5, y - 8, 3, 3); } }
+    function draw() {
+      const g1 = g.createLinearGradient(0, 0, 0, H); g1.addColorStop(0, "#17163a"); g1.addColorStop(1, "#2c2a5e"); g.fillStyle = g1; g.fillRect(0, 0, W, H);
+      for (let r = 0; r < 4; r++) for (let a = 0; a < 14; a++) { const ang = Math.PI * (.08 + .84 * a / 13), rad = 36 + r * 9; B("rgba(60,58,110,.6)", W / 2 - Math.cos(ang) * rad * 1.5 - 2, 84 - Math.sin(ang) * rad * .6, 4, 2); }
+      B("#c8323f", 2, 0, 8, 30); B("#ffd34e", 2, 9, 8, 10); B("#c8323f", W - 10, 0, 8, 30); B("#ffd34e", W - 10, 9, 8, 10);
+      const sh = Math.sin(t * .9) * 12; for (let r = 0; r < 3; r++) for (let c = 0; c < 6; c++) person(24 + c * 15 + sh, 14 + r * 15, (r + c) % 4, Math.floor(t * 2) % 2);
+      [20, 52, 84, 116].forEach(x => { B("#8a5a3b", x, 66, 12, 5); B("#a8703a", x, 66, 12, 1); B("#7a4a22", x + 1, 71, 3, 2); B("#7a4a22", x + 8, 71, 3, 2); });
+      const px = W / 2 + Math.sin(t * 1.6) * 34; B("#6b4423", px - 8, 80, 16, 10); B("#8a5a3b", px - 8, 80, 16, 2); B("#efc3a0", px - 4, 70, 7, 6); B("#1a1410", px - 5, 68, 9, 3); B("#2a1c14", px - 4, 74, 7, 3); B("#2a2f3e", px - 5, 76, 10, 5); B("#c8323f", px, 76, 1, 4);
+      if (Math.floor(t * 5) !== shots.k) { shots.k = Math.floor(t * 5); shots.push({ x: px, y: 66 }); }
+      shots.forEach(s => { s.y -= 1.9; B("#050814", s.x - 3, s.y - 3, 7, 6); B("#f7f0d5", s.x - 2, s.y - 2, 5, 4); B("#2b6cff", s.x - 1, s.y - 1, 3, 1); }); shots = shots.filter(s => s.y > 8);
+    }
+    function frame(ts) { if (!running) return; t += Math.min(.05, Math.max(0, (ts - last) / 1000 || 0)); last = ts; draw(); requestAnimationFrame(frame); }
+    function start() { if (running || reduced) return; running = true; last = performance.now(); requestAnimationFrame(frame); }
+    draw();
+    if ("IntersectionObserver" in window) new IntersectionObserver(es => { if (es[0].isIntersecting) start(); else running = false; }).observe(cv); else start();
+    if (hooks) hooks.zasca = (n, dt = .05) => { for (let i = 0; i < n; i++) t += dt; draw(); return t; };
+  }
+
   /* ------------------------------------------- Salón de la Dimisión (ranking público) */
   function initHall() {
     const tabs = $("#hall-tabs"), body = $("#hall-body"), unitEl = $("#hall-unit"), note = $("#hall-note"), S = window.SGS; if (!tabs || !body || !S) return;
@@ -854,6 +879,6 @@
   fixAccents(document.body); reveals(); poll(); updateScore();
   $$("canvas[data-sil]").forEach(c => silhouette(c, c.dataset.sil));
   $$("canvas[data-icon]").forEach(c => icon(c, c.dataset.icon));
-  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb(); initMoncloaThumb(); initBanderaThumb(); initUnidadThumb(); initHall();
+  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb(); initMoncloaThumb(); initBanderaThumb(); initUnidadThumb(); initZascaThumb(); initHall();
   bootDone.then(typeTagline);
 })();

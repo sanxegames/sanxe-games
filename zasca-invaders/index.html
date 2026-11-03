@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1021">
+  <link rel="canonical" href="https://sanxegames.es/zasca-invaders/">
+  <meta name="description" content="Zasca Invaders: el Tribuno defiende su atril del hemiciclo a base de zascas. Disparos retro de sátira política, gratis en el navegador.">
+  <title>Zasca Invaders — Sanxe Games</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/PressStart2P-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <main class="cabinet">
+    <header>
+      <div>
+        <a class="back" href="../">&lt; SANXE GAMES</a>
+        <h1>ZASCA INVADERS</h1>
+      </div>
+      <div class="toolbar" aria-label="Opciones de partida">
+        <a class="small-button back-button" href="../" aria-label="Volver a Sanxe Games">&lt; VOLVER</a>
+        <button id="sound" class="small-button" aria-label="Activar o desactivar sonido" aria-pressed="true">SONIDO: ON</button>
+        <button id="pause" class="small-button" disabled>PAUSA</button>
+        <button id="restart" class="small-button" disabled>REINICIAR</button>
+      </div>
+    </header>
+
+    <section class="screen" aria-label="Videojuego Zasca Invaders">
+      <div class="hud">
+        <span>LIKES <b id="score">00000</b></span>
+        <span>ACTO <b id="stage">1</b>·<b id="wave">1</b></span>
+        <span>VIDAS <b id="lives">3</b></span>
+        <span>RÉCORD <b id="best">00000</b></span>
+      </div>
+      <p id="game-status" class="sr-only" role="status" aria-live="polite">Partida preparada.</p>
+      <canvas id="game" width="800" height="600" tabindex="0" aria-label="Área de juego" aria-describedby="game-help">Tu navegador necesita admitir Canvas para ejecutar el juego.</canvas>
+      <div id="overlay" class="overlay" aria-live="polite">
+        <div class="panel">
+          <p class="stamp" id="overlay-stamp">SÁTIRA PIXELADA</p>
+          <h2 id="overlay-title">ZASCA INVADERS</h2>
+          <p id="overlay-text"></p>
+          <div id="overlay-extra"></div>
+          <div id="overlay-actions" class="actions"></div>
+          <p id="game-help" class="keys">← → o A D: mover · ESPACIO: lanzar un zasca (mantén para repetir) · P: pausa · R: reiniciar. Cada disparo gasta turno de palabra; acertar lo recarga.</p>
+        </div>
+      </div>
+    </section>
+
+    <nav class="dpad three" aria-label="Controles táctiles">
+      <button data-act="left" aria-label="Izquierda">&lt;</button>
+      <button data-act="fire" class="fire" aria-label="Lanzar zasca">ZASCA</button>
+      <button data-act="right" aria-label="Derecha">&gt;</button>
+    </nav>
+
+    <footer>Ficción humorística. Caricatura satírica sin afiliación política: nos reímos de todos.</footer>
+  </main>
+  <script src="audio.js?v=1"></script>
+  <script src="../assets/scores.js?v=3"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>

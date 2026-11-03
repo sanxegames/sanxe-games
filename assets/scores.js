@@ -7,7 +7,7 @@
   const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "http://127.0.0.1:8787" : PROD;
   const BOARDS = [
     ["king-kongestion", "KING KONGESTION", "puntos"], ["pastor-de-socios", "PASTOR DE SOCIOS", "puntos"], ["flappy-falcon", "FLAPPY FALCON", "puntos"],
-    ["fruta-clasico", "FRUTA · CLÁSICO", "kilos"], ["fruta-reloj", "FRUTA · RELOJ", "kilos"], ["rumbo-a-moncloa", "RUMBO A LA MONCLOA", "puntos"], ["bandera-xxl", "BANDERA XXL", "metros"], ["unidad-total", "UNIDAD TOTAL", "puntos"]
+    ["fruta-clasico", "FRUTA · CLÁSICO", "kilos"], ["fruta-reloj", "FRUTA · RELOJ", "kilos"], ["rumbo-a-moncloa", "RUMBO A LA MONCLOA", "puntos"], ["bandera-xxl", "BANDERA XXL", "metros"], ["unidad-total", "UNIDAD TOTAL", "puntos"], ["zasca-invaders", "ZASCA INVADERS", "likes"]
   ];
   const safe = (fn, fb = null) => { try { return fn(); } catch { return fb; } };
   const store = { get: k => safe(() => localStorage.getItem(k)), set: (k, v) => safe(() => localStorage.setItem(k, v)) };

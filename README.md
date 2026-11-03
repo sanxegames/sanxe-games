@@ -15,6 +15,7 @@ Minijuegos arcade de navegador con sátira política. Web estática publicada co
 - `rumbo-a-moncloa/`: juego Rumbo a la Moncloa (estilo Frogger con tres etapas: Galicia, Madrid y Bruselas; canvas sin dependencias): `audio.js` y `game.js`. Con `?debug`, `window.__rm` permite simular partidas.
 - `bandera-xxl/`: juego Bandera XXL (apilador tipo Stack: pedestal, bandera creciente y vista final con zoom; canvas sin dependencias): `audio.js` y `game.js`. Con `?debug`, `window.__bx` permite simular partidas.
 - `unidad-total/`: juego Unidad Total (chat del partido: expulsa a los disidentes; canvas sin dependencias): `audio.js` y `game.js`. Con `?debug`, `window.__ut` permite simular partidas.
+- `zasca-invaders/`: juego Zasca Invaders (shooter tipo Space Invaders con turno de palabra, jefes y mejoras; canvas sin dependencias): `audio.js` y `game.js`. Con `?debug`, `window.__zi` permite simular partidas.
 
 ## Añadir un juego
 
