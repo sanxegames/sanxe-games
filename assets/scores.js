@@ -88,7 +88,7 @@
     // titular
     const hl = o.headline || "", lines = hl ? wrap(g, hl.toUpperCase(), 860, `58px ${TT}`).slice(0, 3) : []; if (lines.length) {
       const bh = 70 + lines.length * 62; g.setLineDash([14, 10]); g.strokeStyle = "#3b4a7a"; g.lineWidth = 5; g.strokeRect(100, 660, 880, bh); g.setLineDash([]);
-      g.fillStyle = "#0b1126"; g.fillRect(104, 664, 872, bh - 8); g.font = `22px ${PX}`; g.textAlign = "left"; g.fillStyle = "#31d7c7"; g.fillText("ÚLTIMA HORA", 130, 706); g.textAlign = "center";
+      g.fillStyle = "#0b1126"; g.fillRect(104, 664, 872, bh - 8); g.font = `34px ${TT}`; g.textAlign = "left"; g.fillStyle = "#31d7c7"; g.fillText("ÚLTIMA HORA", 130, 704); g.textAlign = "center";
       g.font = `58px ${TT}`; g.fillStyle = "#f7f0d5"; lines.forEach((l, i) => g.fillText(l, 540, 772 + i * 62));
     }
     g.font = `64px ${TT}`; g.fillStyle = "#ff4d61"; g.fillText("¿ME SUPERAS?", 540, 930);
