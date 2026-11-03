@@ -44,18 +44,18 @@
   function startRound() {
     const al = alive(), n = al.length, frac = Math.min(.5, .35 + (round - 1) * .02), d = Math.max(1, Math.min(n, Math.ceil(n * frac)));
     al.forEach(m => { m.dis = false; m.sneaky = false; });
-    const pool = al.slice().sort(() => Math.random() - .5).slice(0, d); pool.forEach(m => { m.dis = true; m.sneaky = round >= 2 && Math.random() < Math.min(.5, .15 + round * .07); });
-    msgs = msgs.filter(m => m.kind === "sys"); spawnT = .6; hintT = round === 1 && cycle === 0 ? 9 : 0; breakT = 0;
+    const pool = al.slice().sort(() => Math.random() - .5).slice(0, d); pool.forEach(m => { m.dis = true; m.sneaky = round >= 3 && Math.random() < Math.min(.4, .05 + round * .05); });
+    msgs = msgs.filter(m => m.kind === "sys"); spawnT = 1.4; hintT = round === 1 && cycle === 0 ? 9 : 0; breakT = 0;
     banner = { text: `RONDA ${round}`, sub: round === 1 ? "Los leales de hoy son los críticos de mañana." : `${n} miembros. ${d} están pensando algo.`, t: 0, life: 2.6 }; updateHud();
   }
   const lvl = () => round + cycle * 3;
-  const lifeNow = () => Math.max(1.6, 4.4 - .55 * (lvl() - 1));
-  const spawnEvery = () => Math.max(.55, 1.45 - .14 * (lvl() - 1));
+  const lifeNow = () => Math.max(2.6, 8 - .5 * (lvl() - 1));
+  const spawnEvery = () => Math.max(.85, 2.7 - .17 * (lvl() - 1));
 
   /* --------------------------------------------------------------- partida */
   function reset(nextCycle) {
     if (!nextCycle) cycle = 0; else cycle++;
-    members = makeMembers(Math.min(36, 30 + cycle * 3)); msgs = []; floats = []; particles = []; round = 1; unity = nextCycle ? Math.max(60, unity) : 100; if (!nextCycle) { score = 0; stats = { out: 0, wrong: 0, infect: 0, rounds: 0 }; } streak = 0; win = false; sel = 0; jinT = 9; mood = 0;
+    members = makeMembers(Math.min(36, 20 + cycle * 4)); msgs = []; floats = []; particles = []; round = 1; unity = nextCycle ? Math.max(60, unity) : 100; if (!nextCycle) { score = 0; stats = { out: 0, wrong: 0, infect: 0, rounds: 0 }; } streak = 0; win = false; sel = 0; jinT = 9; mood = 0;
     pushSys("Se ha creado el grupo «UNIDAD TOTAL». El Jinete ha añadido a " + (members.length) + " participantes."); startRound();
   }
   function updateHud() { UI.unity.textContent = Math.round(unity); UI.members.textContent = alive().length; UI.score.textContent = pad(score, 5); UI.best.textContent = pad(Math.max(best, score), 5); }
@@ -125,11 +125,11 @@
   function spawnMessage() {
     const al = alive(), diss = al.filter(m => m.dis), live = new Set(msgs.filter(m => m.state === "live" && m.mem).map(m => m.mem.id)), cands = diss.filter(m => !live.has(m.id)), loyal = al.filter(m => !m.dis);
     const early = round === 1 && cycle === 0 && msgs.filter(m => m.mem).length < 2;
-    const wantDis = cands.length > 0 && !early && (Math.random() < Math.min(.8, .5 + .04 * (lvl() - 1)) || !loyal.length || rnd1 >= 3);
+    const wantDis = cands.length > 0 && !early && (Math.random() < Math.min(.75, .45 + .03 * (lvl() - 1)) || !loyal.length || rnd1 >= 3);
     if (wantDis) {
       rnd1 = 0; const mem = pick(cands);
       if (alive().length === 1) pushMsg({ kind: "dis", mem, text: "Jefe... solo quedamos tú, yo y el caballo. ¿No crees que...?", life: lifeNow() + 1.5, age: 0 });
-      else if (mem.sneaky) { const f = pick(FLIPS); pushMsg({ kind: "flip", mem, text: f[0], text2: f[1], flipped: false, flipAt: rnd(.9, 1.4), life: lifeNow(), age: 0 }); }
+      else if (mem.sneaky) { const f = pick(FLIPS); pushMsg({ kind: "flip", mem, text: f[0], text2: f[1], flipped: false, flipAt: rnd(1.8, 2.4), life: lifeNow(), age: 0 }); }
       else pushMsg({ kind: "dis", mem, text: pick(DISSENT), life: lifeNow(), age: 0 });
     } else if (loyal.length) { rnd1++; const mem = pick(loyal); pushMsg({ kind: "loyal", mem, text: pick(LOYAL) }); }
   }
