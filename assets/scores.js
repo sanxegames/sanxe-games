@@ -3,7 +3,7 @@
    Al terminar una partida, ofrece guardar 3 iniciales y la puntuación en el ranking público. Sin cuentas ni cookies.
    Uso en los juegos:  SGS.begin("id-del-juego") al empezar cada partida  ·  SGS.attach(contenedor, { game, score, unit, reason, lv }) al terminar. */
 (() => {
-  const PROD = "";   // URL del Worker en producción (se rellena tras desplegarlo). Vacío = ranking desactivado.
+  const PROD = "https://sanxe-scores.scoreboard-api.workers.dev";   // Worker del Salón de la Dimisión (Cloudflare)
   const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "http://127.0.0.1:8787" : PROD;
   const BOARDS = [
     ["king-kongestion", "KING KONGESTION", "puntos"], ["pastor-de-socios", "PASTOR DE SOCIOS", "puntos"], ["flappy-falcon", "FLAPPY FALCON", "puntos"],

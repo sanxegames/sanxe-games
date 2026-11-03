@@ -5,4 +5,4 @@ compatibility_date = "2026-10-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "sanxe-scores"
-database_id = "00000000-0000-0000-0000-000000000000" # se sustituye por el id real al crear la base de datos
+database_id = "595bb23b-f5cd-4f11-82f2-a67915b542d3"
