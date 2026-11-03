@@ -121,7 +121,7 @@ function reset(full=true){
 }
 function updateControls(){UI.pause.disabled=state!=="playing"&&state!=="paused";UI.pause.textContent=state==="paused"?"CONTINUAR":"PAUSA";UI.restart.disabled=state==="title";}
 function focusGame(){canvas.focus({preventScroll:true});}
-function startGame(){reset(true);bossIntro=BOSS_INTRO_DURATION;bossLand=0;spawnClock=BOSS_INTRO_DURATION+1;sfxRoar();state="playing";updateControls();UI.status.textContent=`Partida iniciada. Línea 1, ${lives} abonos.`;bubbleT=0;UI.overlay.classList.add("hidden");last=performance.now();focusGame();beep(440,.06);}
+function startGame(){if(window.SGS)SGS.begin("king-kongestion");reset(true);bossIntro=BOSS_INTRO_DURATION;bossLand=0;spawnClock=BOSS_INTRO_DURATION+1;sfxRoar();state="playing";updateControls();UI.status.textContent=`Partida iniciada. Línea 1, ${lives} abonos.`;bubbleT=0;UI.overlay.classList.add("hidden");last=performance.now();focusGame();beep(440,.06);}
 function startNextLevel(){
   setLevel(level+1);reset(false);bossIntro=0;bossLand=BOSS_LAND_DURATION;spawnClock=1.6;bubbleT=0;sfxThud();sfxDingDong(.3);
   state="playing";updateControls();UI.status.textContent=`Línea ${level}. Los barriles van más rápido.`;
@@ -150,7 +150,7 @@ function showEnd(){
   state="lost";updateControls();UI.title.textContent="Servicio suspendido";
   UI.text.textContent=`Comunicado oficial: el incidente en la línea ${level} no ha revestido gravedad. Puntuación: ${score}.`;
   UI.status.textContent=`Servicio suspendido en la línea ${level}. ${score} puntos.`;
-  UI.start.textContent="JUGAR DE NUEVO";UI.overlay.classList.remove("hidden");releaseInputs();requestAnimationFrame(()=>UI.start.focus());beep(130,.25);
+  UI.start.textContent="JUGAR DE NUEVO";UI.overlay.classList.remove("hidden");if(window.SGS){const ex=document.querySelector("#overlay-extra");ex.innerHTML="";SGS.attach(ex,{game:"king-kongestion",score,unit:"puntos",reason:Math.floor(Math.random()*6),lv:level});}releaseInputs();requestAnimationFrame(()=>UI.start.focus());beep(130,.25);
 }
 function loseLife(){
   if(player.invuln>0)return false;

@@ -63,12 +63,12 @@
   const paintSound = () => { UI.sound.textContent = "SONIDO: " + (soundOn ? "ON" : "OFF"); UI.sound.setAttribute("aria-pressed", String(soundOn)); };
 
   /* ---------------------------------------------------------------- pantallas */
-  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false }) {
+  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false, board = null }) {
     UI.help.hidden = !help; UI.stamp.textContent = stamp; UI.title.textContent = title; UI.text.textContent = text; UI.text.hidden = !text;
     if (typeof extra === "string") UI.extra.innerHTML = extra; else { UI.extra.innerHTML = ""; UI.extra.appendChild(extra); }
     UI.actions.innerHTML = "";
     actions.forEach((a, i) => { const b = document.createElement("button"); b.type = "button"; b.className = "btn" + (a.secondary ? " secondary" : ""); b.textContent = a.label; b.addEventListener("click", a.fn); UI.actions.appendChild(b); if (i === 0) requestAnimationFrame(() => b.focus()); });
-    UI.overlay.classList.remove("hidden"); fixAccents(UI.overlay);
+    if (board && window.SGS) SGS.attach(UI.extra, board); UI.overlay.classList.remove("hidden"); fixAccents(UI.overlay);
   }
   const hideOverlay = () => UI.overlay.classList.add("hidden");
   const goHome = () => { location.href = "../"; };
@@ -86,7 +86,7 @@
     state = "title"; setControls(); music.stop();
     showOverlay({ help: true, stamp: "GRUPO DE MENSAJERÍA · SOLO LEALES", title: "UNIDAD TOTAL", text: `En el grupo del partido hay críticos infiltrados. Lee cada mensaje: toca los de los disidentes para expulsarlos antes de que contagien, y deja en paz a los leales.${best ? ` Récord: ${best}.` : ""}`, extra: fichaNode(), actions: [{ label: "ENTRAR AL GRUPO", fn: play }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
   }
-  function play(nextCycle) { state = "playing"; reset(nextCycle === true); hideOverlay(); setControls(); AUD.unlock(); if (soundOn) music.start(cycle); UI.status.textContent = "Expulsa a los disidentes del grupo."; safe(() => canvas.focus({ preventScroll: true })); acc = 0; last = performance.now(); }
+  function play(nextCycle) { if (window.SGS) SGS.begin("unidad-total"); state = "playing"; reset(nextCycle === true); hideOverlay(); setControls(); AUD.unlock(); if (soundOn) music.start(cycle); UI.status.textContent = "Expulsa a los disidentes del grupo."; safe(() => canvas.focus({ preventScroll: true })); acc = 0; last = performance.now(); }
   function pauseScreen() { if (state !== "playing") return; state = "paused"; setControls(); music.pause(true); showOverlay({ help: true, stamp: "GRUPO SILENCIADO", title: "PAUSA", text: "Por una vez, nadie escribe. Qué paz.", actions: [{ label: "SEGUIR", fn: resume }, { label: "REINICIAR", secondary: true, fn: () => play() }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] }); }
   function resume() { if (state !== "paused") return; state = "playing"; acc = 0; last = performance.now(); hideOverlay(); setControls(); music.pause(false); safe(() => canvas.focus({ preventScroll: true })); }
   function endGame(victory) {
@@ -96,6 +96,7 @@
     const title = victory ? "UNANIMIDAD TOTAL: 100 % DE ACUERDO" : pick(["EL GRUPO SE HA ROTO: HAN HABLADO DEMASIADO", "SE ABRE UN DEBATE. FIN DE LA UNIDAD", "LA DISCREPANCIA GANA POR MAYORÍA"]);
     UI.status.textContent = victory ? "Unanimidad total. Solo quedan el Jinete y el caballo." : "El grupo se ha roto.";
     showOverlay({
+      board: { game: "unidad-total", score, unit: "puntos", reason: victory ? [3, 5][Math.floor(Math.random() * 2)] : [0, 1, 2, 4][Math.floor(Math.random() * 4)], lv: round },
       stamp: victory ? "ACTA DE UNANIMIDAD" : `RONDA ${round} · ${left + 2} PARTICIPANTES`, title, text: "",
       extra: `<div class="acta"><b>EJECUTIVA NACIONAL · ACTA Nº ${3000 + stats.out}/UT</b><dl>${row("RONDAS", `${victory ? stats.rounds : stats.rounds} SUPERADAS`)}${row("EXPULSADOS", `${stats.out} DISIDENTES`)}${row("ERRORES", `${stats.wrong} LEALES ECHADOS POR ERROR`)}${row("CONTAGIOS", `${stats.infect}`)}${row("QUEDAN", victory ? "EL JINETE Y EL CABALLO" : `${left} MIEMBROS + ADMINS`)}${row("PUNTOS", `<u>${score}${nb ? " · ¡RÉCORD!" : ` · RÉCORD ${best}`}</u>`)}${row("VEREDICTO", victory ? "NADIE DISCREPA. NADIE QUEDA." : "EL JINETE CULPA A LA PRENSA")}</dl><i class="sello">${victory ? "UNÁNIME" : "DISCREPANCIA"}</i></div>`,
       actions: victory ? [{ label: "NUEVA AFILIACIÓN (MÁS DIFÍCIL)", fn: () => play(true) }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] : [{ label: "OTRO GRUPO", fn: () => play() }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }]

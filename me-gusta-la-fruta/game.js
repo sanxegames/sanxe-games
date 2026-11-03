@@ -112,12 +112,12 @@
   }
 
   /* ---------------------------------------------------------- pantallas */
-  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false }) {
+  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false, board = null }) {
     UI.help.hidden = !help; UI.stamp.textContent = stamp; UI.title.textContent = title; UI.text.textContent = text; UI.text.hidden = !text;
     if (typeof extra === "string") UI.extra.innerHTML = extra; else { UI.extra.innerHTML = ""; UI.extra.appendChild(extra); }
     UI.actions.innerHTML = "";
     actions.forEach((a, i) => { const b = document.createElement("button"); b.type = "button"; b.className = "btn" + (a.secondary ? " secondary" : ""); b.textContent = a.label; b.addEventListener("click", a.fn); UI.actions.appendChild(b); if (i === 0) requestAnimationFrame(() => b.focus()); });
-    UI.overlay.classList.remove("hidden"); pointer.down = false; fixAccents(UI.overlay);
+    if (board && window.SGS) SGS.attach(UI.extra, board); UI.overlay.classList.remove("hidden"); pointer.down = false; fixAccents(UI.overlay);
   }
   const hideOverlay = () => UI.overlay.classList.add("hidden");
   const goHome = () => { location.href = "../"; };
@@ -126,7 +126,7 @@
     const b1 = +store.get("mf-best-classic") || 0, b2 = +store.get("mf-best-time") || 0;
     showOverlay({ help: true, title: "ME GUSTA LA FRUTA", text: `La presidenta ha montado una frutería. Corta toda la fruta que vuele, esquiva los impuestos (las bombas con un %) y no dejes que se pudra nada.${b1 || b2 ? ` Récords: clásico ${b1}, contrarreloj ${b2}.` : ""}`, actions: [{ label: "CLÁSICO: 3 VIDAS", fn: () => play("classic") }, { label: "CONTRARRELOJ: 60 S", fn: () => play("time") }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
   }
-  function play(m) {
+  function play(m) { if (window.SGS) SGS.begin(m === "classic" ? "fruta-clasico" : "fruta-reloj");
     state = "playing"; reset(m); hideOverlay(); setControls(); AUD.unlock(); if (soundOn) music.start(1);
     UI.status.textContent = m === "classic" ? "Modo clásico: tres vidas." : "Contrarreloj: sesenta segundos."; safe(() => canvas.focus({ preventScroll: true })); acc = 0; last = performance.now();
   }
@@ -140,7 +140,7 @@
     else h = ["SE PUDRIÓ LA FRUTA", "El Gobierno atribuye la podredumbre a la fruta del anterior."];
     const tier = kilos >= 150 ? "FRUTERO MAYOR DEL REINO" : kilos >= 80 ? "FRUTERO DE GUARDIA" : kilos >= 40 ? "APRENDIZ DE MERCADO" : kilos >= 15 ? "CATADOR" : "FRUTA VERDE";
     UI.status.textContent = `Fin de la partida con ${kilos} kilos.`;
-    showOverlay({ stamp: mode === "classic" ? "CLÁSICO" : "CONTRARRELOJ", title: h[0], text: `${kilos} kilos${newBest ? " (¡récord!)" : `. Récord: ${best}`}. Rango: ${tier}.`, extra: `<p class="headline"><b>ÚLTIMA HORA</b>${h[1]}<small>Mejor combo: ${comboMax} · Piezas cortadas: ${sliced} · Impuestos tocados: ${bombsHit}</small></p>`, actions: [{ label: "OTRA VEZ", fn: () => play(mode) }, { label: "CAMBIAR DE MODO", secondary: true, fn: titleScreen }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
+    showOverlay({ board: { game: mode === "classic" ? "fruta-clasico" : "fruta-reloj", score: kilos, unit: "kilos", reason: mode === "classic" ? (cause === "impuestos" ? 0 : cause === "podrida" ? 1 : 3) : [0, 1, 2, 3][Math.floor(Math.random() * 4)] }, stamp: mode === "classic" ? "CLÁSICO" : "CONTRARRELOJ", title: h[0], text: `${kilos} kilos${newBest ? " (¡récord!)" : `. Récord: ${best}`}. Rango: ${tier}.`, extra: `<p class="headline"><b>ÚLTIMA HORA</b>${h[1]}<small>Mejor combo: ${comboMax} · Piezas cortadas: ${sliced} · Impuestos tocados: ${bombsHit}</small></p>`, actions: [{ label: "OTRA VEZ", fn: () => play(mode) }, { label: "CAMBIAR DE MODO", secondary: true, fn: titleScreen }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
   }
 
   /* ------------------------------------------------------------ lanzamientos */

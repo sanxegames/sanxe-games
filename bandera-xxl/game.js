@@ -65,13 +65,13 @@
   const paintSound = () => { UI.sound.textContent = "SONIDO: " + (soundOn ? "ON" : "OFF"); UI.sound.setAttribute("aria-pressed", String(soundOn)); };
 
   /* ---------------------------------------------------------------- pantallas */
-  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false, side = false }) {
+  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false, side = false, board = null }) {
     UI.overlay.classList.toggle("side", side);
     UI.help.hidden = !help; UI.stamp.textContent = stamp; UI.title.textContent = title; UI.text.textContent = text; UI.text.hidden = !text;
     if (typeof extra === "string") UI.extra.innerHTML = extra; else { UI.extra.innerHTML = ""; UI.extra.appendChild(extra); }
     UI.actions.innerHTML = "";
     actions.forEach((a, i) => { const b = document.createElement("button"); b.type = "button"; b.className = "btn" + (a.secondary ? " secondary" : ""); b.textContent = a.label; b.addEventListener("click", a.fn); UI.actions.appendChild(b); if (i === 0) requestAnimationFrame(() => b.focus()); });
-    UI.overlay.classList.remove("hidden"); fixAccents(UI.overlay);
+    if (board && window.SGS) SGS.attach(UI.extra, board); UI.overlay.classList.remove("hidden"); fixAccents(UI.overlay);
   }
   const hideOverlay = () => UI.overlay.classList.add("hidden");
   const goHome = () => { location.href = "../"; };
@@ -93,7 +93,7 @@
     state = "title"; setControls(); music.stop();
     showOverlay({ help: true, stamp: "OBRA PÚBLICA, SIN LICENCIA", title: "BANDERA XXL", text: `«Si no cabe en la rotonda, es que es pequeña.» Apila el pedestal bloque a bloque: lo que sobresale, se cae... y el Ayuntamiento multa.${bestM ? ` Récord: ${bestM} m.` : ""}`, extra: posterNode(), actions: [{ label: "EMPEZAR LA OBRA", fn: play }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
   }
-  function play() { state = "playing"; reset(); hideOverlay(); setControls(); AUD.unlock(); if (soundOn) music.start(0); UI.status.textContent = "Suelta cada bloque justo encima del anterior."; safe(() => canvas.focus({ preventScroll: true })); acc = 0; last = performance.now(); }
+  function play() { if (window.SGS) SGS.begin("bandera-xxl"); state = "playing"; reset(); hideOverlay(); setControls(); AUD.unlock(); if (soundOn) music.start(0); UI.status.textContent = "Suelta cada bloque justo encima del anterior."; safe(() => canvas.focus({ preventScroll: true })); acc = 0; last = performance.now(); }
   function pauseScreen() { if (state !== "playing") return; state = "paused"; setControls(); music.pause(true); showOverlay({ help: true, stamp: "OBRA PARADA", title: "PAUSA", text: "El Ayuntamiento aprovecha para inspeccionar el pedestal.", actions: [{ label: "SEGUIR", fn: resume }, { label: "REINICIAR", secondary: true, fn: play }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] }); }
   function resume() { if (state !== "paused") return; state = "playing"; acc = 0; last = performance.now(); hideOverlay(); setControls(); music.pause(false); safe(() => canvas.focus({ preventScroll: true })); }
   function showOver() {
@@ -103,7 +103,7 @@
     const row = (k, v) => `<dt>${k}</dt><dd>${v}</dd>`;
     UI.status.textContent = `Fin de la obra: ${m} metros. Multa total: ${euros(total)} euros.`;
     showOverlay({
-      side: true, stamp: `${m} METROS · ${STAGES[Math.min(4, Math.floor(n / STAGE_N))].name}`, title: sub, text: "",
+      board: { game: "bandera-xxl", score: m, unit: "metros", reason: Math.floor(Math.random() * 6) }, side: true, stamp: `${m} METROS · ${STAGES[Math.min(4, Math.floor(n / STAGE_N))].name}`, title: sub, text: "",
       extra: `<div class="acta"><b>AYUNTAMIENTO · EXPEDIENTE Nº ${2000 + n}/XXL</b><dl>${row("OBRA", "BANDERA XXL SIN LICENCIA")}${row("ALTURA", `${m} m${nb ? " (¡RÉCORD!)" : ` · RÉCORD ${bestM} m`}`)}${row("BLOQUES", `${n} (${cuts} TORCIDOS)`)}${row("PERFECTOS", `${perfects} · RACHA ${bestCombo}`)}${row("MULTAS", `${euros(fines)} €`)}${row("CAÍDA", "5.000 €")}${row("TOTAL", `<u>${euros(total)} €</u>`)}${row("PAGA", "EL AYUNTAMIENTO (O SEA, USTED)")}</dl><i class="sello">SIN LICENCIA</i></div>`,
       actions: [{ label: "OTRA OBRA", fn: play }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }]
     });

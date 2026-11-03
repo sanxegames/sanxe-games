@@ -825,10 +825,35 @@
     if (hooks) hooks.unidad = (n, dt = .05) => { for (let i = 0; i < n; i++) t += dt; draw(); return t; };
   }
 
+  /* ------------------------------------------- Salón de la Dimisión (ranking público) */
+  function initHall() {
+    const tabs = $("#hall-tabs"), body = $("#hall-body"), unitEl = $("#hall-unit"), note = $("#hall-note"), S = window.SGS; if (!tabs || !body || !S) return;
+    const sample = body.innerHTML, base = note.textContent; let cur = null, seq = 0;
+    const row = (cells, cls) => { const tr = document.createElement("tr"); if (cls) tr.className = cls; cells.forEach(c => { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); }); return tr; };
+    function show(rows, unit, text) { body.replaceChildren(...rows); unitEl.textContent = unit.toUpperCase(); if (text != null) note.textContent = text; }
+    async function load(id) {
+      cur = id; const mine = ++seq; tabs.querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.id === id)));
+      const unit = (S.boards.find(b => b[0] === id) || [])[2] || "puntos";
+      if (!S.enabled) { body.innerHTML = sample; unitEl.textContent = "PUNTOS"; note.textContent = "El Salón está en obras: mostramos datos de muestra. " + base; return; }
+      show([row(["", "", "", "Cargando el Salón…"])], unit);
+      try {
+        const j = await S.top(id, 10); if (mine !== seq) return;
+        const rows = j.scores.map(r => row([r.rank + ".º", r.name, S.fmt(r.score), (r.lv ? "Nv. " + r.lv + " · " : "") + (r.reason || "")]));
+        if (!rows.length) rows.push(row(["1.º", "???", "???????", "Aún no hay nadie. Sé el primero en asumir responsabilidades (las de otro)."], "me"));
+        else rows.push(row([(j.scores.length + 1) + ".º", "TÚ", "???????", "Tu nombre aquí. Juega y entra en el Salón."], "me"));
+        show(rows, unit, base);
+      } catch { if (mine !== seq) return; body.innerHTML = sample; unitEl.textContent = "PUNTOS"; note.textContent = "El Salón no responde ahora mismo: mostramos datos de muestra. " + base; }
+    }
+    S.boards.forEach(([id, label]) => { const b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "tab"); b.dataset.id = id; b.textContent = label; b.setAttribute("aria-selected", "false"); b.addEventListener("click", () => load(id)); tabs.appendChild(b); });
+    fixAccents(tabs);
+    let started = false; const start = () => { if (started) return; started = true; load(S.boards[0][0]); };
+    if ("IntersectionObserver" in window) new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { start(); o.disconnect(); } }, { rootMargin: "200px" }).observe(tabs); else start();
+  }
+
   /* ---------------------------------------------------------------- init */
   fixAccents(document.body); reveals(); poll(); updateScore();
   $$("canvas[data-sil]").forEach(c => silhouette(c, c.dataset.sil));
   $$("canvas[data-icon]").forEach(c => icon(c, c.dataset.icon));
-  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb(); initMoncloaThumb(); initBanderaThumb(); initUnidadThumb();
+  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb(); initMoncloaThumb(); initBanderaThumb(); initUnidadThumb(); initHall();
   bootDone.then(typeTagline);
 })();

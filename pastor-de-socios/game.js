@@ -191,13 +191,13 @@
 
   /* ----------------------------------------------------------- pantallas */
   function starsHtml(n) { return `<div class="stars" aria-label="${n} de 3 estrellas">${[0, 1, 2].map(i => `<i class="star ${i < n ? "on" : ""}"></i>`).join("")}</div>`; }
-  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false }) {
+  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false, board = null }) {
     $("#game-help").hidden = !help;
     UI.stamp.textContent = stamp; UI.title.textContent = title; UI.text.textContent = text; UI.text.hidden = !text;
     if (typeof extra === "string") UI.extra.innerHTML = extra; else { UI.extra.innerHTML = ""; UI.extra.appendChild(extra); }
     UI.actions.innerHTML = "";
     actions.forEach((a, i) => { const b = document.createElement("button"); b.type = "button"; b.className = "btn" + (a.secondary ? " secondary" : ""); b.textContent = a.label; b.addEventListener("click", a.fn); UI.actions.appendChild(b); if (i === 0) requestAnimationFrame(() => b.focus()); });
-    UI.overlay.classList.remove("hidden"); keys.clear(); pointer.down = false;
+    if (board && window.SGS) SGS.attach(UI.extra, board); UI.overlay.classList.remove("hidden"); keys.clear(); pointer.down = false;
   }
   const hideOverlay = () => UI.overlay.classList.add("hidden");
   function titleScreen() {
@@ -218,7 +218,7 @@
     }
     showOverlay({ stamp: "ELIGE LEGISLATURA", title: "MAPA", extra: wrap, actions: [{ label: "VOLVER", secondary: true, fn: () => (from === "pause" ? pauseScreen() : titleScreen()) }] });
   }
-  function playLevel(n, fresh) {
+  function playLevel(n, fresh) { if (window.SGS) SGS.begin("pastor-de-socios");
     if (fresh) score = 0;
     state = "playing"; startLevel(n); hideOverlay(); setControls(); AUD.unlock(); if (soundOn) music.start(n);
     UI.status.textContent = `${level.name}. Lleva a los socios al corral.`; safe(() => canvas.focus({ preventScroll: true })); acc = 0; last = performance.now();
@@ -246,14 +246,14 @@
     prog.stars[level.n] = Math.max(prog.stars[level.n] || 0, st); prog.unlocked = Math.max(prog.unlocked, level.n + 1); prog.best = Math.max(prog.best, score); saveProg();
     state = "levelclear"; setControls(); sfx.win(); music.stop(); const [h1, h2] = headline();
     UI.status.textContent = `${level.name} superada con ${st} estrellas.`;
-    showOverlay({ stamp: level.name, title: "INVESTIDURA APROBADA", text: `${baseVotes()} votos con ${Math.floor(timeLeft)} s de margen (+${bonus}). Puntuación: ${score}.`, extra: `${starsHtml(st)}<p class="headline"><b>TITULAR</b>${h1}<small>${h2}</small></p>`, actions: [{ label: "SIGUIENTE LEGISLATURA", fn: () => playLevel(level.n + 1) }, { label: "REPETIR", secondary: true, fn: () => playLevel(level.n) }, { label: "MAPA", secondary: true, fn: () => mapScreen() }] });
+    showOverlay({ board: { game: "pastor-de-socios", score, unit: "puntos", reason: [2, 3, 4, 5][Math.floor(Math.random() * 4)], lv: level.n }, stamp: level.name, title: "INVESTIDURA APROBADA", text: `${baseVotes()} votos con ${Math.floor(timeLeft)} s de margen (+${bonus}). Puntuación: ${score}.`, extra: `${starsHtml(st)}<p class="headline"><b>TITULAR</b>${h1}<small>${h2}</small></p>`, actions: [{ label: "SIGUIENTE LEGISLATURA", fn: () => playLevel(level.n + 1) }, { label: "REPETIR", secondary: true, fn: () => playLevel(level.n) }, { label: "MAPA", secondary: true, fn: () => mapScreen() }] });
   }
   function gameOver(why) {
     prog.best = Math.max(prog.best, score); saveProg(); state = "lost"; setControls(); sfx.lose(); music.stop(); UI.status.textContent = "Fin de la legislatura.";
     const t = why === "tiempo"
       ? ["TE HAN CENSURADO", `Se acabó el tiempo: te quedaste en ${baseVotes()} votos. Moción aprobada, a hacer las maletas.`, "ÚLTIMA HORA", "El Gobierno cae sin enterarse de que había que votar."]
       : ["NO SALEN LAS CUENTAS", "Demasiados socios se han ido al Grupo Mixto: ya no hay forma de llegar a 176. Elecciones a la vista.", "ÚLTIMA HORA", "El Gobierno atribuye la fuga a «razones meteorológicas»."];
-    showOverlay({ stamp: level.name, title: t[0], text: `${t[1]} Puntuación: ${score}. Récord: ${prog.best}.`, extra: `<p class="headline"><b>${t[2]}</b>${t[3]}</p>`, actions: [{ label: "REINTENTAR", fn: () => playLevel(level.n) }, { label: "MAPA", secondary: true, fn: () => mapScreen() }, { label: "INICIO", secondary: true, fn: titleScreen }] });
+    showOverlay({ board: { game: "pastor-de-socios", score, unit: "puntos", reason: why === "tiempo" ? 1 : 0, lv: level.n }, stamp: level.name, title: t[0], text: `${t[1]} Puntuación: ${score}. Récord: ${prog.best}.`, extra: `<p class="headline"><b>${t[2]}</b>${t[3]}</p>`, actions: [{ label: "REINTENTAR", fn: () => playLevel(level.n) }, { label: "MAPA", secondary: true, fn: () => mapScreen() }, { label: "INICIO", secondary: true, fn: titleScreen }] });
   }
 
   /* ----------------------------------------------------------- habilidades */

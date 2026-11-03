@@ -94,12 +94,12 @@
   function reset() { round = 1; lives = 3; score = 0; seats = BASE; streak = 0; stats = { doors: 0, deaths: 0, gaviotas: 0, pulpos: 0 }; particles = []; floats = []; bubble = null; breakT = 0; startRound(); }
 
   /* ---------------------------------------------------------------- pantallas */
-  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false }) {
+  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false, board = null }) {
     UI.help.hidden = !help; UI.stamp.textContent = stamp; UI.title.textContent = title; UI.text.textContent = text; UI.text.hidden = !text;
     if (typeof extra === "string") UI.extra.innerHTML = extra; else { UI.extra.innerHTML = ""; UI.extra.appendChild(extra); }
     UI.actions.innerHTML = "";
     actions.forEach((a, i) => { const b = document.createElement("button"); b.type = "button"; b.className = "btn" + (a.secondary ? " secondary" : ""); b.textContent = a.label; b.addEventListener("click", a.fn); UI.actions.appendChild(b); if (i === 0) requestAnimationFrame(() => b.focus()); });
-    UI.overlay.classList.remove("hidden"); fixAccents(UI.overlay);
+    if (board && window.SGS) SGS.attach(UI.extra, board); UI.overlay.classList.remove("hidden"); fixAccents(UI.overlay);
   }
   const hideOverlay = () => UI.overlay.classList.add("hidden");
   const goHome = () => { location.href = "../"; };
@@ -118,7 +118,7 @@
     state = "title"; setControls(); music.stop();
     showOverlay({ help: true, stamp: "CAMPAÑA DE LA LISTA MÁS VOTADA", title: "RUMBO A LA MONCLOA", text: `Ganó las elecciones con 137 escaños. Para gobernar faltan 39: cruza la carretera de las encuestas, salta por el río de los titulares y llama a cinco puertas.${best ? ` Récord: ${best}.` : ""}`, extra: fichaNode(), actions: [{ label: "EMPEZAR LA CAMPAÑA", fn: play }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
   }
-  function play() { state = "playing"; reset(); hideOverlay(); setControls(); AUD.unlock(); if (soundOn) music.start(1); UI.status.textContent = "Cruza hasta las puertas del palacio."; safe(() => canvas.focus({ preventScroll: true })); acc = 0; last = performance.now(); }
+  function play() { if (window.SGS) SGS.begin("rumbo-a-moncloa"); state = "playing"; reset(); hideOverlay(); setControls(); AUD.unlock(); if (soundOn) music.start(1); UI.status.textContent = "Cruza hasta las puertas del palacio."; safe(() => canvas.focus({ preventScroll: true })); acc = 0; last = performance.now(); }
   function pauseScreen() { if (state !== "playing") return; state = "paused"; setControls(); music.pause(true); showOverlay({ help: true, stamp: "TRÁFICO DETENIDO", title: "PAUSA", text: "Por una vez, los coches esperan al candidato.", actions: [{ label: "SEGUIR", fn: resume }, { label: "REINICIAR", secondary: true, fn: play }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] }); }
   function resume() { if (state !== "paused") return; state = "playing"; acc = 0; last = performance.now(); hideOverlay(); setControls(); music.pause(false); safe(() => canvas.focus({ preventScroll: true })); }
   function gameOver() {
@@ -126,7 +126,7 @@
     const heads = [["GANÓ LAS ELECCIONES, PERDIÓ EL GOBIERNO", "Tuvo la lista más votada, pero no pasó de la carretera."], ["SIN SOCIOS NO HAY MONCLOA", `Se quedó en ${seats} escaños, a ${GOAL - seats} del sueño.`], ["INVESTIDURA FALLIDA", "El candidato dice que «el resultado es una victoria moral»."], ["EL GALLEGO SE QUEDA A MEDIO CAMINO", "Preguntado por si sube o baja, responde: «Depende»."]];
     const h = seats >= 168 ? ["A UN PASO DE LA MONCLOA", `${seats} escaños: a ${GOAL - seats} de gobernar. Culpa, dice, «del tráfico».`] : pick(heads);
     UI.status.textContent = `Fin de la campaña con ${score} puntos.`;
-    showOverlay({ stamp: `ETAPA ${round}: ${THEMES[theme].name}`, title: h[0], text: `${score} puntos${nb ? " (¡récord!)" : `. Récord: ${best}`}. Socios conseguidos: ${stats.doors}. Caídas: ${stats.deaths}.`, extra: `<p class="headline"><b>ÚLTIMA HORA</b>${h[1]}<small>Mejor ronda: ${bestRound} · Gaviotas cazadas: ${stats.gaviotas} · Pulpos: ${stats.pulpos}</small></p>`, actions: [{ label: "OTRA CAMPAÑA", fn: play }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
+    showOverlay({ board: { game: "rumbo-a-moncloa", score, unit: "puntos", reason: seats >= 168 ? 2 : ({ coche: 0, agua: 1, micro: 4 })[pl && pl.kind] ?? [3, 5][Math.floor(Math.random() * 2)], lv: round }, stamp: `ETAPA ${round}: ${THEMES[theme].name}`, title: h[0], text: `${score} puntos${nb ? " (¡récord!)" : `. Récord: ${best}`}. Socios conseguidos: ${stats.doors}. Caídas: ${stats.deaths}.`, extra: `<p class="headline"><b>ÚLTIMA HORA</b>${h[1]}<small>Mejor ronda: ${bestRound} · Gaviotas cazadas: ${stats.gaviotas} · Pulpos: ${stats.pulpos}</small></p>`, actions: [{ label: "OTRA CAMPAÑA", fn: play }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
   }
 
   /* ------------------------------------------------------------------ efectos */

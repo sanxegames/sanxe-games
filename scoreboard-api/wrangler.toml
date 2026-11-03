@@ -1,0 +1,8 @@
+name = "sanxe-scores"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sanxe-scores"
+database_id = "00000000-0000-0000-0000-000000000000" # se sustituye por el id real al crear la base de datos

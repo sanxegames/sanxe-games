@@ -124,7 +124,7 @@
     rain = th.rain ? Array.from({ length: 140 }, () => ({ x: rnd(0, W + 200), y: rnd(0, H), s: rnd(560, 800) })) : [];
     clouds = Array.from({ length: 9 }, () => ({ x: rnd(0, W), y: rnd(20, 330), w: rnd(60, 150), v: rnd(.12, .3) }));
   }
-  function startTrip(n, fresh) {
+  function startTrip(n, fresh) { if (window.SGS) SGS.begin("flappy-falcon");
     n = Math.min(n, TRIPS.length); tripN = n; trip = { ...TRIPS[n - 1] };
     trip.themeObj = THEMES[trip.theme];
     if (fresh) score = 0;
@@ -141,12 +141,12 @@
 
   /* ----------------------------------------------------------- pantallas */
   const starsHtml = n => `<div class="stars" aria-label="${n} de 3 estrellas">${[0, 1, 2].map(i => `<i class="star ${i < n ? "on" : ""}"></i>`).join("")}</div>`;
-  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false }) {
+  function showOverlay({ stamp = "SÁTIRA PIXELADA", title, text = "", extra = "", actions = [], help = false, board = null }) {
     UI.help.hidden = !help; UI.stamp.textContent = stamp; UI.title.textContent = title; UI.text.textContent = text; UI.text.hidden = !text;
     if (typeof extra === "string") UI.extra.innerHTML = extra; else { UI.extra.innerHTML = ""; UI.extra.appendChild(extra); }
     UI.actions.innerHTML = "";
     actions.forEach((a, i) => { const b = document.createElement("button"); b.type = "button"; b.className = "btn" + (a.secondary ? " secondary" : ""); b.textContent = a.label; b.addEventListener("click", a.fn); UI.actions.appendChild(b); if (i === 0) requestAnimationFrame(() => b.focus()); });
-    UI.overlay.classList.remove("hidden"); flapHeld = false;
+    if (board && window.SGS) SGS.attach(UI.extra, board); UI.overlay.classList.remove("hidden"); flapHeld = false;
   }
   const hideOverlay = () => UI.overlay.classList.add("hidden");
   const goHome = () => { location.href = "../"; };
@@ -188,13 +188,13 @@
     state = "tripclear"; setControls(); music.stop(); sfx.land(); sfx.applause(); if (perfect) sfx.perfect(); updateHud();
     const [h1, h2] = landingHeadline(perfect, allVotes);
     UI.status.textContent = `Aterrizaje en ${trip.name} con ${st} estrellas.`;
-    showOverlay({ stamp: trip.name, title: "HAN ATERRIZADO", text: `Puntuación: ${score} (+${landBonus} aterrizaje, +${voteBonus} votos). Velocidad de toma: ${Math.round(vel)}.`, extra: `${starsHtml(st)}<p class="headline"><b>TITULAR</b>${h1}<small>${h2}</small></p>`, actions: [{ label: tripN + 1 >= TRIPS.length ? "VUELO SIN FIN" : "SIGUIENTE VIAJE", fn: () => playTrip(tripN + 1) }, { label: "REPETIR", secondary: true, fn: () => playTrip(tripN) }, { label: "MAPA", secondary: true, fn: () => mapScreen() }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
+    showOverlay({ board: { game: "flappy-falcon", score, unit: "puntos", reason: [3, 4][Math.floor(Math.random() * 2)], lv: tripN }, stamp: trip.name, title: "HAN ATERRIZADO", text: `Puntuación: ${score} (+${landBonus} aterrizaje, +${voteBonus} votos). Velocidad de toma: ${Math.round(vel)}.`, extra: `${starsHtml(st)}<p class="headline"><b>TITULAR</b>${h1}<small>${h2}</small></p>`, actions: [{ label: tripN + 1 >= TRIPS.length ? "VUELO SIN FIN" : "SIGUIENTE VIAJE", fn: () => playTrip(tripN + 1) }, { label: "REPETIR", secondary: true, fn: () => playTrip(tripN) }, { label: "MAPA", secondary: true, fn: () => mapScreen() }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
   }
   function gameOver() {
     if (trip.endless) prog.endless = Math.max(prog.endless || 0, passed); prog.best = Math.max(prog.best, score); saveProg(); state = "lost"; setControls(); music.stop(); sfx.lose();
     const m = { nube: ["CHOQUE CON LA REALIDAD", "El Gobierno lo niega: «ha sido un contacto no deseado»."], suelo: ["ATERRIZAJE FORZOSO", "Fuentes oficiales hablan de «maniobra estratégica»."], duro: ["PISTA DE UN SOLO USO", "Se investigarán las causas en cuanto termine el verano."], fuera: ["SE QUEDÓ SIN PISTA", "El piloto asegura que quería aterrizar en el césped «por coherencia»."] }[crashWhy] || ["AVERÍA", "Se investigarán las causas."];
     UI.status.textContent = "El avión ha caído.";
-    showOverlay({ stamp: trip.name, title: m[0], text: `Puntuación: ${score}. Récord: ${prog.best}. ${trip.endless ? `Escalas superadas: ${passed}. Récord de escalas: ${prog.endless || 0}.` : `Llegaste hasta el tramo ${passed} de ${trip.K}.`}`, extra: `<p class="headline"><b>ÚLTIMA HORA</b>${m[1]}</p>`, actions: [{ label: "REINTENTAR", fn: () => playTrip(tripN) }, { label: "MAPA", secondary: true, fn: () => mapScreen() }, { label: "INICIO", secondary: true, fn: titleScreen }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
+    showOverlay({ board: { game: "flappy-falcon", score, unit: "puntos", reason: ({ nube: 0, suelo: 1, duro: 3, fuera: 2 })[crashWhy] ?? 4, lv: tripN }, stamp: trip.name, title: m[0], text: `Puntuación: ${score}. Récord: ${prog.best}. ${trip.endless ? `Escalas superadas: ${passed}. Récord de escalas: ${prog.endless || 0}.` : `Llegaste hasta el tramo ${passed} de ${trip.K}.`}`, extra: `<p class="headline"><b>ÚLTIMA HORA</b>${m[1]}</p>`, actions: [{ label: "REINTENTAR", fn: () => playTrip(tripN) }, { label: "MAPA", secondary: true, fn: () => mapScreen() }, { label: "INICIO", secondary: true, fn: titleScreen }, { label: "VOLVER A SANXE GAMES", secondary: true, fn: goHome }] });
   }
 
   /* ----------------------------------------------------------- simulación */

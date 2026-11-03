@@ -24,7 +24,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/PressStart2P-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/VT323-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/home.css?v=8">
+  <link rel="stylesheet" href="assets/home.css?v=9">
   <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -252,11 +252,12 @@
       <div class="wrap">
         <p class="kicker reveal">TABLA DE RÉCORDS · DATOS OFICIALES</p>
         <h2 class="title reveal" id="t-salon">SALÓN DE LA DIMISIÓN</h2>
-        <p class="lead reveal">Los mejores jugadores de la historia, y los motivos por los que abandonaron la partida (ninguno fue dimitir).</p>
+        <p class="lead reveal">Los mejores jugadores de cada juego, y los motivos por los que abandonaron la partida (ninguno fue dimitir).</p>
         <div class="hall reveal">
+          <div class="hall-tabs" id="hall-tabs" role="tablist" aria-label="Elegir juego"></div>
           <table>
-            <thead><tr><th>PUESTO</th><th>NOMBRE</th><th>PUNTOS</th><th>MOTIVO DE SALIDA</th></tr></thead>
-            <tbody>
+            <thead><tr><th>PUESTO</th><th>NOMBRE</th><th id="hall-unit">PUNTOS</th><th>MOTIVO DE SALIDA</th></tr></thead>
+            <tbody id="hall-body">
               <tr><td>1.º</td><td>ABC</td><td>9.999.999</td><td>Asumió responsabilidades. Las de otro.</td></tr>
               <tr><td>2.º</td><td>CUL</td><td>8.750.000</td><td>La culpa era del anterior jugador.</td></tr>
               <tr><td>3.º</td><td>OBR</td><td>7.310.000</td><td>Obras previstas. Y luego, imprevistas.</td></tr>
@@ -264,6 +265,7 @@
               <tr class="me"><td>5.º</td><td>TÚ</td><td>???????</td><td>Tu nombre aquí. Pulsa "Jugar" y compite.</td></tr>
             </tbody>
           </table>
+          <p class="hall-note" id="hall-note">Al acabar una partida puedes dejar tus 3 iniciales. Solo guardamos iniciales, puntuación y fecha: sin cuentas ni cookies.</p>
         </div>
       </div>
     </section>
@@ -305,6 +307,7 @@
   <script src="assets/commuter-sprites.js"></script>
   <script src="pastor-de-socios/sprites.js?v=2"></script>
   <script src="me-gusta-la-fruta/sprites.js?v=1"></script>
-  <script src="assets/home.js?v=18"></script>
+  <script src="assets/scores.js?v=1"></script>
+  <script src="assets/home.js?v=19"></script>
 </body>
 </html>
