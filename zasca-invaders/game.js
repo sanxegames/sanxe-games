@@ -46,7 +46,7 @@
   const POWERS = {
     hilo: { name: "HILO DE TUITS", sub: "Disparo triple", col: "#31d7c7" },
     interrup: { name: "INTERRUPCIÓN", sub: "Todos congelados", col: "#ffd34e" },
-    mesa: { name: "PREGUNTA A LA MESA", sub: "Bomba en el hemiciclo", col: "#ff4d61" },
+    mesa: { name: "PREGUNTA A LA MESA", sub: "Bomba en el hemiciclo", col: "#c792ea" },
     escano: { name: "UN ESCAÑO MÁS", sub: "+1 vida", col: "#3cff7a" }
   };
 
@@ -140,7 +140,7 @@
   /* ------------------------------------------------------------------ efectos */
   const shake = (m, d = .25) => { if (reduced) return; shakeM = Math.max(shakeM, m); shakeT = Math.max(shakeT, d); };
   const flash = (c = "#fff", d = .14) => { if (!reduced) { flashT = d; flashCol = c; } };
-  const float = (x, y, text, color, life = 1.1) => floats.push({ x, y, text, color, t: 0, life });
+  const float = (x, y, text, color, life = 1.1, size = 22, heart = false) => floats.push({ x, y, text, color, t: 0, life, size, heart });
   const say = (text, life = 2.2) => { bubble = { text, t: 0, life }; };
   function burst(x, y, colors, k = 10, sp = 200) { for (let i = 0; i < k; i++) { const a = rnd(0, 6.283), v = rnd(.3, 1) * sp; particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30, t: 0, life: rnd(.35, .8), color: pick(colors), s: pick([3, 4, 5]), g: 420 }); } }
   const multNow = () => Math.min(5, 1 + Math.floor(combo / 4));
@@ -158,9 +158,9 @@
     if (pl.lives <= 0) { gameOver(kind === "rebote" ? "rebote" : kind === "boss" ? "boss" : "bulo"); return; } if (Math.random() < .6) say(pick(HURT_SAY), 2);
   }
   function applyPower(type, x, y) {
-    sfx.power(); const P = POWERS[type]; float(x, y - 20, P.name, P.col, 1.5);
+    sfx.power(); const P = POWERS[type]; if (type !== "escano") float(x, y - 20, P.name, P.col, 1.5);
     if (type === "hilo") tripleT = 9; else if (type === "interrup") { freezeT = 4; sfx.freeze(); flash("#bde8ff", .2); }
-    else if (type === "escano") { pl.lives = Math.min(5, pl.lives + 1); updateHud(); }
+    else if (type === "escano") { pl.lives = Math.min(5, pl.lives + 1); updateHud(); float(x, y - 40, "+1", "#3cff7a", 1.8, 56, true); float(x, y - 8, "UN ESCAÑO MÁS", "#3cff7a", 1.5, 20); burst(x, y, ["#3cff7a", "#f7f0d5", "#ffffff"], 18, 190); }
     else { sfx.bomb(); shake(9, .5); flash("#ffffff", .3); ebul = []; hammers = []; if (boss) { boss.hp -= 12; boss.flash = .3; if (boss.hp <= 0) bossDown(); } const rowsAlive = [...new Set(enemies.filter(e => e.alive).map(e => e.r))].sort((a, b) => b - a).slice(0, 2); for (const e of enemies) if (e.alive && rowsAlive.includes(e.r)) killEnemy(e, true); bots = []; }
   }
   function dropPower(x, y, force) { if (!force && Math.random() > .07) return; powerups.push({ x, y, type: pick(["hilo", "hilo", "interrup", "mesa", "escano"]), vy: 90 }); }
@@ -232,7 +232,7 @@
     }
     ebul = ebul.filter(b => !b.dead);
     // powerups
-    for (const p of powerups) { p.y += p.vy * dt; if (hit(p.x, p.y, 22, 22, pl.x, PY - 26, 28, 46)) { p.dead = true; applyPower(p.type, p.x, p.y); } if (p.y > H + 20) p.dead = true; } powerups = powerups.filter(p => !p.dead);
+    for (const p of powerups) { p.y += p.vy * dt; if (hit(p.x, p.y, 30, 30, pl.x, PY - 26, 28, 46)) { p.dead = true; applyPower(p.type, p.x, p.y); } if (p.y > H + 20) p.dead = true; } powerups = powerups.filter(p => !p.dead);
     // quips
     quipT -= dt; if (quipT <= 0 && !bubble) { quipT = rnd(12, 20); say(pick(HIT_SAY)); }
     for (const p of particles) { p.t += dt; p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; } particles = particles.filter(p => p.t < p.life);
@@ -305,12 +305,22 @@
     if (Math.floor(t * 3) % 2) R("#ff4d61", x + 13, y - 12, 4, 4);
   }
   function drawPower(p) {
-    const P = POWERS[p.type], x = Math.round(p.x), y = Math.round(p.y + Math.sin(t * 6 + p.x) * 2); ctx.fillStyle = "rgba(255,255,255,.2)"; ctx.beginPath(); ctx.arc(x, y, 16, 0, 7); ctx.fill();
-    R("#050814", x - 12, y - 12, 24, 24); R(P.col, x - 10, y - 10, 20, 20);
-    if (p.type === "hilo") { R("#050814", x - 8, y - 6, 7, 5); R("#050814", x + 1, y - 2, 7, 5); R("#050814", x - 5, y + 3, 7, 5); }
-    else if (p.type === "interrup") { R("#050814", x - 1, y - 7, 2, 8); R("#050814", x - 1, y, 6, 2); R("#050814", x - 7, y - 7, 14, 1); R("#050814", x - 7, y + 6, 14, 1); }
-    else if (p.type === "mesa") { R("#050814", x - 2, y - 8, 4, 16); R("#050814", x - 7, y - 8, 14, 5); }
-    else { R("#050814", x - 7, y - 5, 5, 5); R("#050814", x + 2, y - 5, 5, 5); R("#050814", x - 5, y, 10, 4); R("#050814", x - 3, y + 4, 6, 3); }
+    const X = Math.round(p.x), Y = Math.round(p.y + Math.sin(t * 6 + p.x) * 2); ctx.fillStyle = "rgba(255,255,255,.22)"; ctx.beginPath(); ctx.arc(X, Y, 23, 0, 7); ctx.fill();
+    const bg = { hilo: "#2b9cf0", interrup: "#ffd34e", mesa: "#c792ea", escano: "#3cff7a" }[p.type];
+    ctx.save(); ctx.translate(X, Y); ctx.scale(1.45, 1.45); const x = 0, y = 0;
+    R("#050814", x - 13, y - 13, 26, 26); R(bg, x - 11, y - 11, 22, 22); R("rgba(255,255,255,.35)", x - 11, y - 11, 22, 3);
+    if (p.type === "hilo") {            // pajarito de tuit sobre fondo azul
+      R("#ffffff", x - 10, y - 7, 3, 2); R("#ffffff", x - 9, y - 5, 3, 2); R("#ffffff", x - 7, y - 3, 11, 6); R("#ffffff", x - 5, y + 3, 8, 3); R("#ffffff", x - 2, y + 6, 4, 1);
+      R("#ffffff", x + 2, y - 8, 6, 6); R("#ffffff", x + 4, y - 10, 2, 2); R("#ffffff", x + 8, y - 6, 3, 2);
+      R("#2b9cf0", x - 5, y - 1, 7, 1); R("#2b9cf0", x - 3, y + 1, 6, 1); R("#050814", x + 5, y - 6, 1, 2);
+    }
+    else if (p.type === "interrup") { R("#050814", x - 1, y - 7, 2, 8); R("#050814", x - 1, y, 6, 2); R("#050814", x - 7, y - 8, 14, 1); R("#050814", x - 7, y + 7, 14, 1); R("#050814", x - 8, y - 7, 1, 14); R("#050814", x + 7, y - 7, 1, 14); }
+    else if (p.type === "mesa") {       // signo de interrogación: pregunta a la mesa
+      R("#050814", x - 4, y - 8, 7, 2); R("#050814", x - 5, y - 6, 2, 2); R("#050814", x + 2, y - 6, 3, 3); R("#050814", x + 1, y - 3, 3, 2); R("#050814", x - 1, y - 1, 3, 3); R("#050814", x - 1, y + 4, 3, 3); R("#ffffff", x + 6, y - 9, 1, 4); R("#ffffff", x + 5, y - 8, 3, 1);
+    }
+    else { R("#050814", x - 7, y - 6, 5, 5); R("#050814", x + 2, y - 6, 5, 5); R("#050814", x - 6, y - 2, 12, 4); R("#050814", x - 4, y + 2, 8, 3); R("#050814", x - 2, y + 5, 4, 2); }
+    ctx.restore();
+    outlinedText({ hilo: "HILO", interrup: "HIELO", mesa: "PREGUNTA", escano: "+1 VIDA" }[p.type], X, Y + 36, "#f7f0d5", `16px ${FONT_T}`);
   }
   function buildBg(ti) {
     const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"), B = (col, x, y, w, h) => gr(g, col, x, y, w, h);
@@ -360,7 +370,7 @@
     for (const s of shots) drawZasca(s.x, s.y, s.vx); for (const b of ebul) drawEBullet(b);
     if (pl && state !== "title") { ctx.save(); ctx.translate(Math.round(pl.x), PY); ctx.scale(1.3, 1.3); if (pl.inv > 0 && Math.floor(t * 14) % 2) ctx.globalAlpha = .4; drawTribuno(ctx, pl.pose > 0, t); if (pl.lock > 0) { R("#ff4d61", -12, -62, 24, 4); R("#f7f0d5", -8, -60, 16, 1); } ctx.restore(); }
     for (const p of particles) { ctx.globalAlpha = clamp(1 - p.t / p.life, 0, 1); R(p.color, p.x, p.y, p.s, p.s); } ctx.globalAlpha = 1;
-    for (const f of floats) { ctx.globalAlpha = clamp(1.7 - f.t / f.life * 1.7 + .2, 0, 1); outlinedText(f.text, f.x, f.y, f.color, `22px ${FONT_T}`); } ctx.globalAlpha = 1;
+    for (const f of floats) { ctx.globalAlpha = clamp(1.7 - f.t / f.life * 1.7 + .2, 0, 1); if (f.heart) { const hx = Math.round(f.x) - 22, hy = Math.round(f.y) - 26; R("#050814", hx - 1, hy - 1, 15, 13); R("#3cff7a", hx, hy, 5, 4); R("#3cff7a", hx + 8, hy, 5, 4); R("#3cff7a", hx, hy + 3, 13, 4); R("#3cff7a", hx + 2, hy + 7, 9, 2); R("#3cff7a", hx + 5, hy + 9, 3, 2); } outlinedText(f.text, f.x, f.y, f.color, `${f.size || 22}px ${FONT_T}`); } ctx.globalAlpha = 1;
     if (bubble && pl) { ctx.font = `22px ${FONT_T}`; const w = Math.ceil(ctx.measureText(bubble.text).width) + 20, h = 28, bx = clamp(Math.round(pl.x - w / 2), 8, W - w - 8), by = PY - 132; ctx.globalAlpha = clamp(Math.min(bubble.t / .12, (bubble.life - bubble.t) / .25, 1), 0, 1); R("#050814", bx - 3, by - 3, w + 6, h + 6); R("#f7f0d5", bx, by, w, h); ctx.fillStyle = "#050814"; ctx.beginPath(); ctx.moveTo(pl.x - 6, by + h + 3); ctx.lineTo(pl.x + 6, by + h + 3); ctx.lineTo(pl.x, by + h + 12); ctx.closePath(); ctx.fill(); ctx.fillStyle = "#f7f0d5"; ctx.beginPath(); ctx.moveTo(pl.x - 4, by + h); ctx.lineTo(pl.x + 4, by + h); ctx.lineTo(pl.x, by + h + 7); ctx.closePath(); ctx.fill(); ctx.fillStyle = "#101629"; ctx.textAlign = "left"; ctx.fillText(bubble.text, bx + 10, by + 21); ctx.globalAlpha = 1; }
     if (state !== "title") drawHud();
     if (banner) { ctx.globalAlpha = clamp(Math.min(banner.t / .2, (banner.life - banner.t) / .5, 1), 0, 1); outlinedText(banner.text, W / 2, 270, "#ffd34e", `${banner.text.length > 14 ? 18 : 26}px ${FONT_PX}`); outlinedText(banner.sub, W / 2, 306, "#f7f0d5", `24px ${FONT_T}`); ctx.globalAlpha = 1; }
@@ -419,7 +429,7 @@
     const snap = () => ({ state, stage, wave: waveN, loop, score, lives: pl && pl.lives, mic: pl && Math.round(pl.mic), lock: pl && +pl.lock.toFixed(1), alive: enemies.filter(e => e.alive).length, boss: boss && boss.hp, ebul: ebul.length, combo, shots: stats.shots, hits: stats.hits, waves: stats.waves, intro: +introT.toFixed(1), tr: tripleT > 0, ufo: !!ufo });
     window.__zi = {
       step: (k = 1, dt = FIXED, draw = true) => { for (let i = 0; i < k; i++) update(dt); if (draw) render(); return snap(); }, snap, play, render, title: titleScreen, over: why => gameOver(why || "bulo"),
-      setStage: (s, w) => { stage = s; waveN = w; startWave(); updateHud(); }, give: type => applyPower(type, pl.x, 300), setScore: n => { score = n; updateHud(); }, key: (k, v) => { keys[k] = v; }, setMic: n => { pl.mic = n; }, kill: () => { enemies.forEach(e => { e.alive = false; }); if (boss) { boss.hp = 0; bossDown(); } }, ebul: () => ebul.length,
+      setStage: (s, w) => { stage = s; waveN = w; startWave(); updateHud(); }, give: type => applyPower(type, pl.x, 300), setScore: n => { score = n; updateHud(); }, spawnPower: (type, x, y, vy = 0) => { powerups.push({ x, y, type, vy }); }, key: (k, v) => { keys[k] = v; }, setMic: n => { pl.mic = n; }, kill: () => { enemies.forEach(e => { e.alive = false; }); if (boss) { boss.hp = 0; bossDown(); } }, ebul: () => ebul.length,
       /* piloto de pruebas: apunta con adelanto, solo dispara alineado y esquiva buscando un hueco libre */
       bot: () => {
         const al = enemies.filter(e => e.alive), vF = form ? form.dir * Math.min(110, 26 + lvl() * 5) * (1 + (1 - al.length / form.total) * 2.4) : 0; let tx = pl.x;
