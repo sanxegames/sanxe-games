@@ -14,8 +14,8 @@
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const canvas = $("#game"), ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
-  const W = 800, H = 600, G = 1100, SC = 2, FIXED = 1 / 120, COUNTER = 548, KILOS_PER_ROUND = 25;
+  const PV = !!(window.SGV && SGV.portrait), W = PV ? SGV.W : 800, H = PV ? SGV.H : 600, G = 1100, SC = 2, FIXED = 1 / 120, COUNTER = H - 52, KILOS_PER_ROUND = 25;   // PV: versión vertical 450×800
+  canvas.width = W; canvas.height = H; ctx.imageSmoothingEnabled = false;
   const KINDS = SPR.KINDS;
 
   const UI = {
@@ -63,16 +63,16 @@
     const phases = [["#ffcf8a", "#ff8a5a", "#3a2a3e", "#4b3550"], ["#ff9a5a", "#b8456a", "#2e2240", "#3e2e55"], ["#1d2a55", "#0b1021", "#171e3a", "#222b50"], ["#2b1a55", "#0f0b2a", "#1d1445", "#2c1f66"]], p = phases[(round - 1) % phases.length];
     R(p[2], 0, 0, W, H); for (let y = 0; y < H; y += 20) for (let x = (y / 20 % 2) * 20; x < W; x += 40) R(p[3], x, y, 38, 18);
     // ventana al fondo
-    const gx = 260, gy = 70, gw = 280, gh = 190, sky = g.createLinearGradient(0, gy, 0, gy + gh); sky.addColorStop(0, p[0]); sky.addColorStop(1, p[1]); g.fillStyle = sky; g.fillRect(gx, gy, gw, gh);
+    const gw = PV ? 200 : 280, gx = (W - gw) / 2, gy = 70, gh = 190, sky = g.createLinearGradient(0, gy, 0, gy + gh); sky.addColorStop(0, p[0]); sky.addColorStop(1, p[1]); g.fillStyle = sky; g.fillRect(gx, gy, gw, gh);
     for (let x = gx, i = 0; x < gx + gw; i++) { const bw = 16 + (i * 7) % 18, bh = 24 + (i * 13) % 56; R(round % 4 >= 2 ? "#0c1430" : "#4a3f78", x, gy + gh - bh, Math.min(bw, gx + gw - x), bh); for (let wy = gy + gh - bh + 5; wy < gy + gh - 4; wy += 8) for (let wx = x + 3; wx < x + bw - 3; wx += 7) if ((wx * 3 + wy) % 5 < 2) R("#ffd34e", wx, wy, 3, 3); x += bw + 2; }
     R("#2a1c14", gx - 8, gy - 8, gw + 16, 8); R("#2a1c14", gx - 8, gy + gh, gw + 16, 8); R("#2a1c14", gx - 8, gy - 8, 8, gh + 16); R("#2a1c14", gx + gw, gy - 8, 8, gh + 16); R("#2a1c14", gx + gw / 2 - 3, gy, 6, gh);
     // toldo
     for (let x = 0; x < W; x += 40) { R(x % 80 ? "#f7f0d5" : "#d9465b", x, 0, 40, 38); } for (let x = 0; x < W; x += 40) { g.fillStyle = x % 80 ? "#f7f0d5" : "#d9465b"; g.beginPath(); g.arc(x + 20, 38, 20, 0, Math.PI); g.fill(); } R("rgba(0,0,0,.25)", 0, 0, W, 6);
     // estantes con cajas de fruta
     const shelf = (y, kinds) => { R("#2a1c14", 0, y, W, 10); R("#4a3223", 0, y, W, 4); for (let x = 12, i = 0; x < W - 60; x += 86, i++) { if (x > gx - 70 && x < gx + gw + 30 && y < gy + gh + 20) continue; R("#6b4423", x, y - 34, 74, 34); R("#8a5a3b", x, y - 34, 74, 5); R("#4a2e1b", x + 2, y - 4, 70, 4); const k = kinds[i % kinds.length]; g.globalAlpha = .9; for (let j = 0; j < 3; j++) g.drawImage(SPR.fruit(k), x + 6 + j * 22, y - 50 - (j % 2) * 3, 24, 24); g.globalAlpha = 1; } };
-    shelf(300, ["apple", "orange", "banana", "grapes", "strawberry"]); shelf(420, ["melon", "pineapple", "orange", "apple"]);
+    shelf(300, ["apple", "orange", "banana", "grapes", "strawberry"]); shelf(420, ["melon", "pineapple", "orange", "apple"]); if (PV) { shelf(560, ["orange", "grapes", "apple", "banana"]); shelf(680, ["strawberry", "melon", "pineapple", "apple"]); }
     // luces
-    for (let i = 0; i < 14; i++) { const x = 20 + i * 58, y = 44 + Math.sin(i * 1.3) * 5; R("#222", x, y, 2, 2); R(["#ff4d61", "#ffd34e", "#31d7c7", "#3cff7a"][i % 4], x - 2, y + 2, 6, 6); }
+    for (let i = 0; i < (PV ? 8 : 14); i++) { const x = 20 + i * 58, y = 44 + Math.sin(i * 1.3) * 5; R("#222", x, y, 2, 2); R(["#ff4d61", "#ffd34e", "#31d7c7", "#3cff7a"][i % 4], x - 2, y + 2, 6, 6); }
     if (round % 4 >= 2) { g.fillStyle = "rgba(0,0,20,.28)"; g.fillRect(0, 0, W, H); }
     bg = c;
     // mostrador (se dibuja por delante de las frutas)
@@ -80,7 +80,7 @@
     MR("#3a2414", 0, 14, W, 60); MR("#6b4423", 0, 14, W, 8); MR("#8a5a3b", 0, 14, W, 3); for (let x = 0; x < W; x += 64) MR("#2a1a0e", x, 22, 3, 52);
     MR("#050814", 0, 12, W, 3);
     mg.font = '8px "Press Start 2P", monospace'; mg.textAlign = "center";
-    [["MANZANA 1€", 130], ["NARANJA 1€", 330], ["MELON 2€", 530], ["LIBERTAD GRATIS", 700]].forEach(([txt, x]) => { const w = Math.ceil(mg.measureText(txt).width) + 14; MR("#050814", x - w / 2 - 2, 30, w + 4, 22); MR("#f7f0d5", x - w / 2, 32, w, 18); MR("#d9465b", x - w / 2, 32, w, 3); mg.fillStyle = "#101629"; mg.fillText(txt, x, 46); });
+    (PV ? [["MANZANA 1€", 75], ["MELON 2€", 215], ["LIBERTAD GRATIS", 350]] : [["MANZANA 1€", 130], ["NARANJA 1€", 330], ["MELON 2€", 530], ["LIBERTAD GRATIS", 700]]).forEach(([txt, x]) => { const w = Math.ceil(mg.measureText(txt).width) + 14; MR("#050814", x - w / 2 - 2, 30, w + 4, 22); MR("#f7f0d5", x - w / 2, 32, w, 18); MR("#d9465b", x - w / 2, 32, w, 3); mg.fillStyle = "#101629"; mg.fillText(txt, x, 46); });
     counterImg = m;
   }
 
@@ -145,7 +145,7 @@
 
   /* ------------------------------------------------------------ lanzamientos */
   function makeItem(kind, type, x0, tx, apex) {
-    const y0 = H + 48, vy = -Math.sqrt(2 * G * (y0 - apex)), tA = -vy / G, vx = (tx - x0) / tA;
+    apex *= H / 600; const y0 = H + 48, vy = -Math.sqrt(2 * G * (y0 - apex)), tA = -vy / G, vx = (tx - x0) / tA;
     return { kind, type, x: x0, y: y0, vx, vy, rot: rnd(0, 6.28), vr: rnd(-4, 4) * (kind === "fruit" ? 1 : .5), r: kind === "fruit" ? (type === "melon" ? 30 : 26) : 27, alive: true, age: 0 };
   }
   function queue(item, delay = 0) { launches.push({ t: delay, item }); }
@@ -158,13 +158,13 @@
   function spawnWave() {
     const n = 1 + Math.floor(rnd(0, 1 + round / 2.2)), pat = Math.random();
     if (pat < .34 || n === 1) { for (let i = 0; i < Math.min(n, 2); i++) { const x0 = rnd(120, W - 120); pickItem(x0, clamp(x0 + rnd(-150, 150), 90, W - 90), rnd(110, 300), i * .22); } }
-    else if (pat < .6) { const c = rnd(220, W - 220), m = Math.min(7, 2 + Math.floor(round / 3)); for (let i = 0; i < m; i++) pickItem(c + (i - (m - 1) / 2) * 24, c + (i - (m - 1) / 2) * 92, rnd(130, 260), i * .06); }
-    else if (pat < .8) { const side = Math.random() < .5 ? -30 : W + 30; for (let i = 0; i < Math.min(5, n + 1); i++) pickItem(side, side < 0 ? rnd(220, 520) : rnd(280, 580), rnd(200, 360), i * .26); }
+    else if (pat < .6) { const c = PV ? rnd(150, W - 150) : rnd(220, W - 220), m = Math.min(PV ? 5 : 7, 2 + Math.floor(round / 3)); for (let i = 0; i < m; i++) pickItem(c + (i - (m - 1) / 2) * (PV ? 14 : 24), c + (i - (m - 1) / 2) * (PV ? 54 : 92), rnd(130, 260), i * .06); }
+    else if (pat < .8) { const side = Math.random() < .5 ? -30 : W + 30; for (let i = 0; i < Math.min(5, n + 1); i++) pickItem(side, side < 0 ? (PV ? rnd(110, 300) : rnd(220, 520)) : (PV ? rnd(150, 340) : rnd(280, 580)), rnd(200, 360), i * .26); }
     else { for (let i = 0; i < Math.min(4, n + 1); i++) { const x0 = rnd(110, W - 110); pickItem(x0, clamp(x0 + rnd(-80, 80), 90, W - 90), rnd(100, 260), i * .17); } }
     sfx.whoosh();
   }
   function spawnPower() {
-    const type = pick(["cana", "libertad", "prensa"]), x0 = rnd(200, W - 200);
+    const type = pick(["cana", "libertad", "prensa"]), x0 = PV ? rnd(120, W - 120) : rnd(200, W - 200);
     queue({ ...makeItem("power", type, x0, clamp(x0 + rnd(-100, 100), 120, W - 120), rnd(150, 280)), r: 30 }, 0); sfx.whoosh();
   }
   function frenzy() { for (let i = 0; i < 10; i++) { const x0 = rnd(100, W - 100); queue(makeItem("fruit", pick(KINDS), x0, clamp(x0 + rnd(-140, 140), 90, W - 90), rnd(110, 320)), i * .26); } }
@@ -245,10 +245,10 @@
   function drawHeart(x, y, on) { HEART.forEach((row, j) => { for (let i = 0; i < 9; i++) if (row[i] === "#") { ctx.fillStyle = on ? (j < 2 && i < 4 ? "#ff8f99" : "#ff4d61") : "#2a2f4a"; ctx.fillRect(x + i * 3, y + j * 3, 3, 3); } }); }
   function drawMascot() {
     const bob = Math.sin(t * 3) * 2 + (mood === "joy" ? Math.abs(Math.sin(t * 14)) * -6 : 0), spr = SPR.mascot(mood === "idle" ? "idle" : mood, 0), sc = 3, w = spr.width * sc, h = spr.height * sc;
-    ctx.save(); ctx.translate(86, COUNTER + 18 + bob); if (mood === "shock") ctx.rotate(Math.sin(t * 40) * .04); ctx.drawImage(spr, -w / 2, -h, w, h); ctx.restore();
+    ctx.save(); ctx.translate(PV ? 62 : 86, COUNTER + 18 + bob); if (mood === "shock") ctx.rotate(Math.sin(t * 40) * .04); ctx.drawImage(spr, -w / 2, -h, w, h); ctx.restore();
   }
   function drawBubble() {
-    const b = bubbles[0]; if (!b) return; ctx.font = `22px ${FONT_T}`; const w = Math.ceil(ctx.measureText(b.text).width) + 20, h = 28, x = clamp(30, 8, W - w - 8), y = 330;
+    const b = bubbles[0]; if (!b) return; ctx.font = `22px ${FONT_T}`; const w = Math.ceil(ctx.measureText(b.text).width) + 20, h = 28, x = clamp(30, 8, W - w - 8), y = H - 270;
     ctx.globalAlpha = clamp(Math.min(b.t / .12, (b.life - b.t) / .25, 1), 0, 1); ctx.fillStyle = "#050814"; ctx.fillRect(x - 3, y - 3, w + 6, h + 6); ctx.fillStyle = "#f7f0d5"; ctx.fillRect(x, y, w, h);
     ctx.fillStyle = "#050814"; ctx.beginPath(); ctx.moveTo(x + 24, y + h + 3); ctx.lineTo(x + 52, y + h + 3); ctx.lineTo(x + 40, y + h + 18); ctx.closePath(); ctx.fill(); ctx.fillStyle = "#f7f0d5"; ctx.beginPath(); ctx.moveTo(x + 28, y + h); ctx.lineTo(x + 48, y + h); ctx.lineTo(x + 40, y + h + 11); ctx.closePath(); ctx.fill();
     ctx.fillStyle = "#101629"; ctx.textAlign = "left"; ctx.fillText(b.text, x + 10, y + 21); ctx.globalAlpha = 1;
@@ -272,7 +272,7 @@
     if (blade.length > 1) { for (let i = 1; i < blade.length; i++) { const a = blade[i - 1], b = blade[i], age = clamp(1 - (t - b.t) / .16, 0, 1); ctx.strokeStyle = `rgba(49,215,199,${(age * .6).toFixed(2)})`; ctx.lineWidth = 9 * age + 2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.strokeStyle = `rgba(255,255,255,${age.toFixed(2)})`; ctx.lineWidth = 4 * age + 1; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); } }
     if (kb.on) { ctx.strokeStyle = "#ffd34e"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(kb.x, kb.y, 12, 0, 7); ctx.moveTo(kb.x - 18, kb.y); ctx.lineTo(kb.x + 18, kb.y); ctx.moveTo(kb.x, kb.y - 18); ctx.lineTo(kb.x, kb.y + 18); ctx.stroke(); }
     drawBubble();
-    for (const f of floats) { ctx.globalAlpha = clamp(1.7 - f.t / f.life * 1.7 + .2, 0, 1); outlinedText(f.text, f.x, f.y, f.color, `24px ${FONT_T}`); } ctx.globalAlpha = 1;
+    for (const f of floats) { ctx.globalAlpha = clamp(1.7 - f.t / f.life * 1.7 + .2, 0, 1); let fxp = f.x; if (PV) { ctx.font = `24px ${FONT_T}`; const hw = ctx.measureText(f.text).width / 2 + 6; fxp = clamp(f.x, hw, W - hw); } outlinedText(f.text, fxp, f.y, f.color, `24px ${FONT_T}`); } ctx.globalAlpha = 1;
     // estado superior
     if (mode === "classic") for (let i = 0; i < 3; i++) drawHeart(14 + i * 34, 12, i < lives);
     if (slowT > 0) { ctx.fillStyle = "rgba(255,179,71,.14)"; ctx.fillRect(0, 0, W, H); outlinedText(`CAÑA ${slowT.toFixed(1)}`, W - 14, 30, "#ffb347", `22px ${FONT_T}`, "right"); }

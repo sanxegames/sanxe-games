@@ -35,3 +35,6 @@ Abre `http://localhost:8000/`. Con `?debug` en la URL, `window.__sg` expone `her
 
 - Código Konami (↑↑↓↓←→←→BA) o 5 clics en el logo del pie: lluvia de barriles.
 - Se respeta `prefers-reduced-motion`: sin animaciones, sin secuencia de arranque.
+
+## Vertical mode (phones in portrait)
+`assets/mobile.js` exposes `window.SGV` on pages whose script tag has `data-vertical`. On a portrait phone (max-width 700px) the canvas becomes 450x800 and each game re-lays out its scene from `SGV.portrait` (variable `PV` in each `game.js`); in landscape everything stays 800x600. Opted-in games: Unidad Total, Bandera XXL, Zasca Invaders, Flappy Falcon, Me gusta la fruta. Use `?vista=vertical` or `?vista=horizontal` to force a mode when testing on desktop. Rotating the phone reloads the page in the right mode.

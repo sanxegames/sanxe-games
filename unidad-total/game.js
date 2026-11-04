@@ -15,10 +15,10 @@
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const canvas = $("#game"), ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
-  const W = 800, H = 600, FIXED = 1 / 120;
-  const AREA_TOP = 62, AREA_BOT = 536; let CX0 = 210, CX1 = 794, BUB_X = 250, BUB_W = 470, FS = 1, compact = false;
-  function applyLayout() { const c = canvas.clientWidth > 0 && canvas.clientWidth < 560; if (c === compact) return; compact = c; CX0 = c ? 4 : 210; CX1 = c ? 796 : 794; BUB_X = CX0 + 42; BUB_W = c ? 730 : 470; FS = c ? 1.3 : 1; for (const m of msgs) if (m.lines) layoutMsg(m); }
+  const PV = !!(window.SGV && SGV.portrait), W = PV ? SGV.W : 800, H = PV ? SGV.H : 600, FIXED = 1 / 120;   // PV: versión vertical 450×800
+  canvas.width = W; canvas.height = H; ctx.imageSmoothingEnabled = false;
+  const AREA_TOP = 62, AREA_BOT = H - 64; let CX0 = 210, CX1 = 794, BUB_X = 250, BUB_W = 470, FS = 1, compact = false;
+  function applyLayout() { const c = PV || (canvas.clientWidth > 0 && canvas.clientWidth < 560); if (c === compact) return; compact = c; CX0 = c ? 4 : 210; CX1 = c ? W - 4 : 794; BUB_X = CX0 + 42; BUB_W = c ? W - 70 : 470; FS = c ? 1.3 : 1; for (const m of msgs) if (m.lines) layoutMsg(m); }
   const NAMES = ["EL NÚMERO DOS", "LA PORTAVOZ", "EL DE LAS FINANZAS", "LA EX-DIPUTADA", "EL TERCERO DE LA LISTA", "EL ASESOR", "EL ALCALDE DEL PUEBLO", "LA CONCEJALA", "EL ECONOMISTA", "EL SECRETARIO", "EL DEL MICRO", "EL FUNDADOR", "LA DE COMUNICACIÓN", "EL DE LOS ESTATUTOS", "EL SENADOR", "LA ABOGADA", "EL DE LA CAFETERÍA", "LA BECARIA", "EL PORTAVOZ ADJUNTO", "EL CONSEJERO", "LA ALCALDESA", "EL DE LAS REDES", "EL PRESIDENTE REGIONAL", "LA SECRETARIA GENERAL"];
   const NCOL = ["#7fdbff", "#ffb347", "#c792ea", "#7cf08a", "#ff8fa3", "#f7e07a", "#8fb8ff", "#ff9f7a"];
   const LOYAL = ["¡Todo perfecto, jefe!", "Ni una crítica. Jamás.", "El Jinete tiene razón. Siempre.", "Estoy de acuerdo. ¿En qué? En todo.", "Aplauso. Aplauso. Aplauso.", "Sobresaliente, como siempre.", "Yo firmo lo que sea, pero con entusiasmo.", "¡Más bandera!", "La unidad es lo primero. Y lo segundo.", "Perdón por existir, jefe.", "Que no me echen, por favor.", "Yo siempre estuve de acuerdo (desde hoy).", "El caballo también tiene razón.", "Buenos días, equipo. Todo bien. TODO.", "Sin debate se vive mejor.", "Os quiero a todos (menos a los que opinan).", "Mi opinión es la del jefe, qué casualidad.", "Cuenten conmigo. Y con mi silencio."];
@@ -217,28 +217,29 @@
     R("#070b14", 0, 0, W, H); for (let y = 0; y < H; y += 4) { ctx.fillStyle = "rgba(255,255,255,.015)"; ctx.fillRect(0, y, W, 1); }
     // marco del móvil/chat
     R("#050814", CX0 - 4, 2, CX1 - CX0 + 8, H - 4); R("#0b141a", CX0, 6, CX1 - CX0, H - 12);
-    ctx.save(); ctx.beginPath(); ctx.rect(CX0, 52, CX1 - CX0, 490); ctx.clip();      // fondo con garabatos
-    for (let y = 60; y < 540; y += 46) for (let x = CX0 + ((y / 46 | 0) % 2) * 23; x < CX1; x += 46) { ctx.globalAlpha = .07; R("#8d98b8", x, y, 6, 4); R("#c8323f", x + 14, y + 8, 5, 3); R("#ffd34e", x + 14, y + 11, 5, 2); R("#8d98b8", x + 26, y + 2, 3, 8); }
+    ctx.save(); ctx.beginPath(); ctx.rect(CX0, 52, CX1 - CX0, H - 110); ctx.clip();      // fondo con garabatos
+    for (let y = 60; y < H - 60; y += 46) for (let x = CX0 + ((y / 46 | 0) % 2) * 23; x < CX1; x += 46) { ctx.globalAlpha = .07; R("#8d98b8", x, y, 6, 4); R("#c8323f", x + 14, y + 8, 5, 3); R("#ffd34e", x + 14, y + 11, 5, 2); R("#8d98b8", x + 26, y + 2, 3, 8); }
     ctx.globalAlpha = 1; ctx.restore();
   }
   function drawHeader() {
     R("#1f2c34", CX0, 6, CX1 - CX0, 48); R("#050814", CX0, 54, CX1 - CX0, 2);
     R("#050814", CX0 + 10, 12, 36, 36); R("#c8323f", CX0 + 12, 14, 32, 8); R("#ffd34e", CX0 + 12, 22, 32, 14); R("#c8323f", CX0 + 12, 36, 32, 10);
     ctx.textAlign = "left"; ctx.font = `24px ${FONT_T}`; ctx.fillStyle = "#f7f0d5"; ctx.fillText("UNIDAD TOTAL", CX0 + 56, 29);
-    ctx.font = `17px ${FONT_T}`; ctx.fillStyle = "#8d98b8"; const typing = Math.floor(t * 2) % 3; ctx.fillText(`${alive().length + 2} participantes · EL JINETE está escribiendo${".".repeat(typing + 1)}`, CX0 + 56, 47);
+    ctx.font = `17px ${FONT_T}`; ctx.fillStyle = "#8d98b8"; const typing = Math.floor(t * 2) % 3; ctx.fillText(`${alive().length + 2} participantes · ${PV ? "EL JINETE escribe" : "EL JINETE está escribiendo"}${".".repeat(typing + 1)}`, CX0 + 56, 47);
     for (let i = 0; i < 3; i++) R("#8d98b8", CX1 - 22, 18 + i * 8, 4, 4);
     if (compact) { R("#050814", CX0, 54, CX1 - CX0, 7); R(unity > 60 ? "#3cff7a" : unity > 30 ? "#ffd34e" : "#ff4d61", CX0 + 2, 56, (CX1 - CX0 - 4) * clamp(unity / 100, 0, 1), 3); }
   }
   function drawFooter() {
-    R("#1f2c34", CX0, 540, CX1 - CX0, 54); R("#050814", CX0, 538, CX1 - CX0, 2);
-    R("#0b141a", CX0 + 14, 550, CX1 - CX0 - 28, 34); R("#2a3a44", CX0 + 14, 550, CX1 - CX0 - 28, 2);
-    R("#8d98b8", CX0 + 26, 562, 10, 8); R("#8d98b8", CX0 + 28, 557, 6, 6); R("#0b141a", CX0 + 30, 559, 2, 3);
-    ctx.font = `19px ${FONT_T}`; ctx.textAlign = "left"; ctx.fillStyle = "#6b7a85"; ctx.fillText("Solo los administradores pueden enviar mensajes.", CX0 + 48, 572);
+    const fy = H - 60;
+    R("#1f2c34", CX0, fy, CX1 - CX0, 54); R("#050814", CX0, fy - 2, CX1 - CX0, 2);
+    R("#0b141a", CX0 + 14, fy + 10, CX1 - CX0 - 28, 34); R("#2a3a44", CX0 + 14, fy + 10, CX1 - CX0 - 28, 2);
+    R("#8d98b8", CX0 + 26, fy + 22, 10, 8); R("#8d98b8", CX0 + 28, fy + 17, 6, 6); R("#0b141a", CX0 + 30, fy + 19, 2, 3);
+    ctx.font = `19px ${FONT_T}`; ctx.textAlign = "left"; ctx.fillStyle = "#6b7a85"; ctx.fillText(PV ? "Solo los administradores escriben." : "Solo los administradores pueden enviar mensajes.", CX0 + 48, fy + 32);
   }
   function drawBubble(m) {
     const x = BUB_X + (m.fx || 0), y = Math.round(m.y), a = m.state === "out" ? clamp(1 - m.outT / .26, 0, 1) : 1;
     if (y > AREA_BOT + 20 || y + m.h < AREA_TOP - 10) return;
-    if (m.kind === "sys") { ctx.font = `17px ${FONT_T}`; ctx.textAlign = "center"; const w = Math.min(540, ctx.measureText(m.text).width + 24); R("#050814", CX0 + (CX1 - CX0) / 2 - w / 2 - 2, y - 1, w + 4, 24); R("rgba(31,44,52,.95)", CX0 + (CX1 - CX0) / 2 - w / 2, y + 1, w, 20); ctx.fillStyle = m.color; ctx.fillText(m.text.length > 70 ? m.text.slice(0, 68) + "…" : m.text, CX0 + (CX1 - CX0) / 2, y + 16); return; }
+    if (m.kind === "sys") { ctx.font = `17px ${FONT_T}`; ctx.textAlign = "center"; const maxT = CX1 - CX0 - 40; let tx = m.text; if (ctx.measureText(tx).width > maxT) { while (tx.length > 8 && ctx.measureText(tx + "…").width > maxT) tx = tx.slice(0, -1); tx = tx.trimEnd() + "…"; } const w = Math.min(maxT + 24, ctx.measureText(tx).width + 24); R("#050814", CX0 + (CX1 - CX0) / 2 - w / 2 - 2, y - 1, w + 4, 24); R("rgba(31,44,52,.95)", CX0 + (CX1 - CX0) / 2 - w / 2, y + 1, w, 20); ctx.fillStyle = m.color; ctx.fillText(tx, CX0 + (CX1 - CX0) / 2, y + 16); return; }
     ctx.globalAlpha = a; const urgent = (m.kind === "dis" || m.kind === "flip" && m.flipped) && m.state === "live" && m.age > m.life - .7, shk = urgent && !reduced ? Math.round(Math.sin(t * 70) * 2) : 0, bx = x + shk;
     if (m.mem && m.mem.face) drawFace(CX0 + 8, y + 2, m.mem.face, 2); else if (m.mem && m.mem.jinete) { R("#050814", CX0 + 8, y + 2, 26, 26); R("#16224a", CX0 + 10, y + 4, 22, 22); ctx.save(); ctx.beginPath(); ctx.rect(CX0 + 10, y + 4, 22, 22); ctx.clip(); ctx.translate(CX0 + 21, y + 24); ctx.scale(.62, .62); drawBeard(ctx, 0); ctx.restore(); } else if (m.mem) { R("#050814", CX0 + 8, y + 2, 26, 26); R(m.mem.col, CX0 + 10, y + 4, 22, 22); R("#050814", CX0 + 16, y + 10, 10, 10); }
     const sl = m.id === sel && m.state === "live";
@@ -270,12 +271,12 @@
   function render() {
     ctx.save(); if (shakeT > 0) ctx.translate(Math.round(rnd(-shakeM, shakeM)), Math.round(rnd(-shakeM, shakeM)));
     applyLayout(); drawBackground(); if (!compact) drawSidebar();
-    ctx.save(); ctx.beginPath(); ctx.rect(CX0, 56, CX1 - CX0, 482); ctx.clip(); for (const m of msgs) drawBubble(m); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.rect(CX0, 56, CX1 - CX0, H - 118); ctx.clip(); for (const m of msgs) drawBubble(m); ctx.restore();
     drawHeader(); drawFooter();
     for (const p of particles) { ctx.globalAlpha = clamp(1 - p.t / p.life, 0, 1); R(p.color, p.x, p.y, p.s, p.s); } ctx.globalAlpha = 1;
     for (const f of floats) { ctx.globalAlpha = clamp(1.7 - f.t / f.life * 1.7 + .2, 0, 1); outlinedText(f.text, f.x, f.y, f.color, `24px ${FONT_T}`); } ctx.globalAlpha = 1;
-    if (hintT > 0 && state === "playing") { ctx.globalAlpha = clamp(hintT / 1.5, 0, 1); outlinedText("LEE CADA MENSAJE: TOCA EL DEL DISIDENTE PARA EXPULSARLO", (CX0 + CX1) / 2, 84, "#f7f0d5", `22px ${FONT_T}`); ctx.globalAlpha = 1; }
-    if (banner) { ctx.globalAlpha = clamp(Math.min(banner.t / .2, (banner.life - banner.t) / .5, 1), 0, 1); const bx = (CX0 + CX1) / 2; R("rgba(5,8,20,.72)", CX0 + 20, 250, CX1 - CX0 - 40, 96); outlinedText(banner.text, bx, 292, "#ffd34e", `22px ${FONT_PX}`); outlinedText(banner.sub, bx, 328, "#f7f0d5", `22px ${FONT_T}`); ctx.globalAlpha = 1; }
+    if (hintT > 0 && state === "playing") { ctx.globalAlpha = clamp(hintT / 1.5, 0, 1); if (PV) { outlinedText("LEE CADA MENSAJE:", (CX0 + CX1) / 2, 84, "#f7f0d5", `22px ${FONT_T}`); outlinedText("TOCA EL DEL DISIDENTE PARA EXPULSARLO", (CX0 + CX1) / 2, 108, "#f7f0d5", `22px ${FONT_T}`); } else outlinedText("LEE CADA MENSAJE: TOCA EL DEL DISIDENTE PARA EXPULSARLO", (CX0 + CX1) / 2, 84, "#f7f0d5", `22px ${FONT_T}`); ctx.globalAlpha = 1; }
+    if (banner) { ctx.globalAlpha = clamp(Math.min(banner.t / .2, (banner.life - banner.t) / .5, 1), 0, 1); const bx = (CX0 + CX1) / 2, by = H / 2 - 50; R("rgba(5,8,20,.72)", CX0 + 20, by, CX1 - CX0 - 40, 96); outlinedText(banner.text, bx, by + 42, "#ffd34e", `22px ${FONT_PX}`); outlinedText(banner.sub, bx, by + 78, "#f7f0d5", `${PV ? 19 : 22}px ${FONT_T}`); ctx.globalAlpha = 1; }
     ctx.restore();
     if (flashT > 0) { ctx.globalAlpha = clamp(flashT * 2.4, 0, .4); ctx.fillStyle = flashCol; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
   }

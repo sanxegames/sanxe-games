@@ -17,9 +17,9 @@
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const canvas = $("#game"), ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
-  const W = 800, H = 600, FIXED = 1 / 120;
-  const BH = 22, BASE_W = 200, START_W = 190, MAX_W = 230, METERS = 2.2, STAGE_N = 15, GROUND_Y = 500, GALLOP_AT = 6;
+  const PV = !!(window.SGV && SGV.portrait), W = PV ? SGV.W : 800, H = PV ? SGV.H : 600, FIXED = 1 / 120;   // PV: versión vertical 450×800
+  canvas.width = W; canvas.height = H; ctx.imageSmoothingEnabled = false;
+  const BH = 22, BASE_W = PV ? 136 : 200, START_W = PV ? 130 : 190, MAX_W = PV ? 160 : 230, WIDEN = PV ? 8 : 12, SPD = PV ? .62 : 1, METERS = 2.2, STAGE_N = 15, GROUND_Y = H - 100, GALLOP_AT = 6;
   const STAGES = [
     { name: "LA ROTONDA", sub: "Empieza la obra. Sin licencia, pero con ganas.", sky: ["#6bb7ff", "#cfeeff"] },
     { name: "LA PLAZA", sub: "Ya se ve desde el Ayuntamiento.", sky: ["#ff8a5a", "#ffd9a0"] },
@@ -48,11 +48,11 @@
   const SKYLINE = Array.from({ length: 22 }, (_, i) => ({ x: i * 40 - 20 + rng() * 14, w: 30 + rng() * 26, h: 50 + rng() * 120, win: rng() }));
   const STARS = Array.from({ length: 80 }, () => ({ x: rng() * W, y: rng() * H, r: rng() < .2 ? 2 : 1, ph: rng() * 6 }));
   const CLOUDS = Array.from({ length: 9 }, () => ({ x: rng() * W, y: rng() * 900, s: .8 + rng() * 1.4, v: 6 + rng() * 10 }));
-  const CROWD = Array.from({ length: 13 }, (_, i) => ({ x: 24 + i * 58 + rng() * 18, c: ["#c8323f", "#2b6cff", "#3cff7a", "#ffd34e", "#dfe3ee"][i % 5], f: rng() < .55, h: rng() < .5 }));
+  const CROWD = Array.from({ length: 13 }, (_, i) => ({ x: 24 + i * (PV ? 31 : 58) + rng() * (PV ? 10 : 18), c: ["#c8323f", "#2b6cff", "#3cff7a", "#ffd34e", "#dfe3ee"][i % 5], f: rng() < .55, h: rng() < .5 }));
   let adIdx = 0, planeX = -400, planeAd = ADS[0];
 
   /* --------------------------------------------------------------- partida */
-  function speedNow() { const w = slab ? slab.w : START_W; let v = Math.min(370, 150 + n * 7) * (w < 50 ? .82 : 1); if (gust > 0) v *= 1.22 + .12 * Math.sin(t * 3); if (gallop > 0) v *= .55; return v; }
+  function speedNow() { const w = slab ? slab.w : START_W; let v = Math.min(370, 150 + n * 7) * (w < 50 ? .82 : 1) * SPD; if (gust > 0) v *= 1.22 + .12 * Math.sin(t * 3); if (gallop > 0) v *= .55; return v; }
   function newSlab() { const top = blocks[blocks.length - 1], w = top.w; spawnDir = -spawnDir; slab = { x: spawnDir > 0 ? 30 : W - 30 - w, w, dir: spawnDir, idx: blocks.length }; }
   const colorFor = i => i === 0 ? "#8d98b8" : (i % 2 ? "#c8323f" : "#ffd34e");
   function reset() {
@@ -120,7 +120,7 @@
   /* ------------------------------------------------------------------ jugada */
   function drop() {
     if (state !== "playing" || !slab) return;
-    hint = 0; const top = blocks[blocks.length - 1], tol = clamp(speedNow() * .03, 6, 12);
+    hint = 0; const top = blocks[blocks.length - 1], tol = clamp(speedNow() * .03, PV ? 5 : 6, 12);
     const left = Math.max(slab.x, top.x), right = Math.min(slab.x + slab.w, top.x + top.w), ov = right - left, y = -(blocks.length) * BH - BH / 2;
     sfx.drop();
     if (ov <= 4) {    // fallo total
@@ -129,7 +129,7 @@
     let b;
     if (Math.abs(slab.x - top.x) <= tol) {   // perfecto
       combo++; perfects++; bestCombo = Math.max(bestCombo, combo); b = { x: top.x, w: slab.w, col: colorFor(blocks.length) };
-      const gain = 10 + Math.min(combo, 8) * 10; if (combo >= 3 && b.w < MAX_W) { const nw = Math.min(MAX_W, b.w + 12); b.x -= (nw - b.w) / 2; b.w = nw; sfx.widen(); float(W / 2, y - 60, "¡PEDESTAL MÁS ANCHO!", "#3cff7a", 1.3); }
+      const gain = 10 + Math.min(combo, 8) * 10; if (combo >= 3 && b.w < MAX_W) { const nw = Math.min(MAX_W, b.w + WIDEN); b.x -= (nw - b.w) / 2; b.w = nw; sfx.widen(); float(W / 2, y - 60, "¡PEDESTAL MÁS ANCHO!", "#3cff7a", 1.3); }
       score += gain; sfx.perfect(combo); float(b.x + b.w / 2, y - 14, `PERFECTO +${gain}`, "#ffd34e", 1.1); burst(b.x + b.w / 2, y, ["#c8323f", "#ffd34e", "#f7f0d5"], 14); flash("#ffd34e", .1); shake(2, .12);
       if (combo > 0 && combo % GALLOP_AT === 0) { gallop = 3; sfx.galope(); showBanner("¡A PASO DE CABALLO!", "Tres bloques a cámara lenta.", 2.2); say(pick(GALLOP_SAY), 2); flash("#ffffff", .2); }
       else if (combo === 1 || combo % 3 === 0) say(pick(PERFECT_SAY), 1.8);
@@ -160,7 +160,7 @@
     shakeT = Math.max(0, shakeT - dt); flashT = Math.max(0, flashT - dt);
     planeX += 62 * dt; if (planeX > W + 700) { planeX = -520; adIdx = (adIdx + 1) % ADS.length; planeAd = ADS[adIdx]; }
   }
-  const camTarget = () => Math.max(0, blocks.length * BH - 200);
+  const camTarget = () => Math.max(0, blocks.length * BH - (GROUND_Y - H / 2));
   function update(dt) {
     t += dt; stepFx(dt);
     prog += (clamp(n / STAGE_N, 0, 4) - prog) * Math.min(1, dt * 1.8);
@@ -180,6 +180,7 @@
   const FONT_PX = '"Press Start 2P", monospace', FONT_T = '"VT323", monospace';
   const R = (c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
   function outlinedText(txt, x, y, color, font, align = "center") { ctx.font = font; ctx.textAlign = align; ctx.fillStyle = "#050814"; [[-2, 0], [2, 0], [0, -2], [0, 2], [2, 2]].forEach(([dx, dy]) => ctx.fillText(txt, x + dx, y + dy)); ctx.fillStyle = color; ctx.fillText(txt, x, y); }
+  function wrapT(text, maxW) { const words = text.split(" "), lines = []; let cur = ""; for (const w of words) { const test = cur ? cur + " " + w : w; if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test; } if (cur) lines.push(cur); return lines; }
   const hx = c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
   const mix = (a, b, f) => { const A = hx(a), B = hx(b); return "#" + [0, 1, 2].map(i => Math.round(A[i] + (B[i] - A[i]) * f).toString(16).padStart(2, "0")).join(""); };
   const gr = (g, c, x, y, w, h) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
@@ -221,7 +222,7 @@
     const night = clamp((p - 1.4) / .9, 0, 1);
     if (night > 0) { for (const s of STARS) { ctx.globalAlpha = night * (.5 + .5 * Math.sin(t * 2 + s.ph)); R("#f7f0d5", s.x, s.y, s.r, s.r); } ctx.globalAlpha = 1; }
     if (p < 1.6) { ctx.globalAlpha = clamp(1.6 - p, 0, 1) * (p < 1 ? 1 : .8); ctx.fillStyle = p < 1 ? "#fff3a8" : "#ffb347"; ctx.beginPath(); ctx.arc(140, 130 + camY * .12 + clamp(p - .8, 0, 1) * 80, 36, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
-    if (p > 2.6) { const k = clamp((p - 2.6) / 1.6, 0, 1), r = 40 + k * 110, mx = 600 - k * 80, my = 190 + k * 40; ctx.fillStyle = "#d8dce8"; ctx.beginPath(); ctx.arc(mx, my, r, 0, 7); ctx.fill(); ctx.fillStyle = "#aab4cf"; [[-.3, -.2, .2], [.35, .1, .15], [-.1, .4, .12], [.1, -.45, .1]].forEach(([dx, dy, rr]) => { ctx.beginPath(); ctx.arc(mx + dx * r, my + dy * r, rr * r, 0, 7); ctx.fill(); }); }
+    if (p > 2.6) { const k = clamp((p - 2.6) / 1.6, 0, 1), r = PV ? 30 + k * 80 : 40 + k * 110, mx = (PV ? W * .72 : 600) - k * 80, my = 190 + k * 40; ctx.fillStyle = "#d8dce8"; ctx.beginPath(); ctx.arc(mx, my, r, 0, 7); ctx.fill(); ctx.fillStyle = "#aab4cf"; [[-.3, -.2, .2], [.35, .1, .15], [-.1, .4, .12], [.1, -.45, .1]].forEach(([dx, dy, rr]) => { ctx.beginPath(); ctx.arc(mx + dx * r, my + dy * r, rr * r, 0, 7); ctx.fill(); }); }
     const cl = clamp(1 - (p - 2.6) / 1.2, 0, 1);
     if (cl > 0) for (const c of CLOUDS) { const y = (((c.y + camY * .25) % 900) + 900) % 900 - 100, x = ((c.x + t * c.v) % (W + 200)) - 100; ctx.globalAlpha = cl * .85; const col = p > 1.2 ? "#4a3a6a" : "#ffffff"; R(col, x, y, 60 * c.s, 14 * c.s); R(col, x + 12 * c.s, y - 8 * c.s, 34 * c.s, 12 * c.s); ctx.globalAlpha = 1; }
     if (p < 2.4) {
@@ -230,7 +231,7 @@
       ctx.globalAlpha = 1;
     }
     if (p > .5 && p < 2.6) {     // globo aerostático rojigualdo
-      const bx = 620 + Math.sin(t * .2) * 40, by = 300 + camY * .3 + Math.sin(t * .5) * 6; ctx.globalAlpha = clamp(Math.min(p - .5, 2.6 - p), 0, 1);
+      const bx = (PV ? W - 100 : 620) + Math.sin(t * .2) * 40, by = 300 + camY * .3 + Math.sin(t * .5) * 6; ctx.globalAlpha = clamp(Math.min(p - .5, 2.6 - p), 0, 1);
       R("#c8323f", bx - 22, by - 34, 44, 12); R("#ffd34e", bx - 26, by - 22, 52, 16); R("#c8323f", bx - 22, by - 6, 44, 12); R("#8a5a3b", bx - 8, by + 14, 16, 10); R("#050814", bx - 12, by + 6, 1, 8); R("#050814", bx + 11, by + 6, 1, 8); ctx.globalAlpha = 1;
     }
     if (p > .8 && p < 3.4) {     // avioneta con pancarta
@@ -246,10 +247,12 @@
     R("#8a8f9e", -W * 2, 0, W * 5, 140); for (let x = -W * 2; x < W * 3; x += 50) for (let yy = 0; yy < 140; yy += 28) if (((x / 50 | 0) + (yy / 28 | 0)) % 2) R("#7a7f90", x, yy, 50, 28);
     R("#5a5f78", -W * 2, 0, W * 5, 4); R("#3a3f58", -W * 2, 4, W * 5, 2);
     // señal de rotonda y farola
+    ctx.save(); ctx.translate(PV ? -322 : 0, 0);
     R("#8d98b8", 706, -52, 3, 52); R("#050814", 692, -78, 31, 30); R("#2b6cff", 694, -76, 27, 26); ctx.strokeStyle = "#f7f0d5"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(707, -63, 7, .4, 5.7); ctx.stroke(); R("#c8323f", 704, -66, 7, 2); R("#ffd34e", 704, -64, 7, 3); R("#c8323f", 704, -61, 7, 2);
-    R("#3a3f58", 76, -60, 4, 60); R("#3a3f58", 70, -62, 16, 3); R("#ffe38a", 66, -58, 10, 4);
+    ctx.restore(); ctx.save(); ctx.translate(PV ? 262 : 0, 0);
+    R("#3a3f58", 76, -60, 4, 60); R("#3a3f58", 70, -62, 16, 3); R("#ffe38a", 66, -58, 10, 4); ctx.restore();
     for (const c of CROWD) { const bob = Math.round(Math.sin(t * 3 + c.x) * 1.5); R("#050814", c.x - 4, 8 + bob, 10, 18); R(c.c, c.x - 3, 10 + bob, 8, 10); R("#efc3a0", c.x - 2, 4 + bob, 6, 6); if (c.h) R("#3a2418", c.x - 2, 3 + bob, 6, 2); if (c.f) { R("#8d98b8", c.x + 6, -6 + bob, 1, 16); R("#c8323f", c.x + 7, -6 + bob, 7, 2); R("#ffd34e", c.x + 7, -4 + bob, 7, 3); R("#c8323f", c.x + 7, -1 + bob, 7, 2); } }
-    ctx.save(); ctx.translate(170, 10); ctx.scale(1.35, 1.35); drawHorse(ctx, t, gallop > 0); ctx.restore();
+    ctx.save(); ctx.translate(PV ? 78 : 170, 10); ctx.scale(1.35, 1.35); drawHorse(ctx, t, gallop > 0); ctx.restore();
   }
   function drawBlock(b, idx, ghost) {
     const sx = sway(idx), x = b.x + sx, y = -(idx + 1) * BH, st = Math.min(4, Math.floor(idx / STAGE_N));
@@ -284,7 +287,7 @@
   }
   function drawHud() {
     // altímetro lateral con hitos
-    const x = 772, y0 = 100, y1 = 470, m = alt(); let prev = 0, nxt = null, pn = "SUELO"; for (const [h, , sn] of LANDMARKS) { if (m >= h) { prev = h; pn = sn; } else { nxt = [h, sn]; break; } }
+    const x = W - 28, y0 = PV ? 130 : 100, y1 = H - 130, m = alt(); let prev = 0, nxt = null, pn = "SUELO"; for (const [h, , sn] of LANDMARKS) { if (m >= h) { prev = h; pn = sn; } else { nxt = [h, sn]; break; } }
     const frac = nxt ? clamp((m - prev) / (nxt[0] - prev), 0, 1) : 1;
     R("rgba(5,8,20,.55)", x - 12, y0 - 40, 36, y1 - y0 + 70); R("#050814", x - 4, y0, 16, y1 - y0); R("#17213c", x - 2, y0 + 2, 12, y1 - y0 - 4);
     const fh = (y1 - y0 - 4) * frac; R(frac >= 1 ? "#3cff7a" : "#ffd34e", x - 2, y1 - 2 - fh, 12, fh);
@@ -294,7 +297,7 @@
     ctx.font = `15px ${FONT_T}`; ctx.fillStyle = "#f7f0d5"; ctx.fillText(nxt ? nxt[1] : "SIN LÍMITE", x + 20, y0 - 9);
     ctx.fillStyle = "#aab4cf"; ctx.fillText(pn === "SUELO" ? "0 m" : `${prev} m`, x + 20, y1 + 16);
     // racha
-    const bx = 14, by = 536; ctx.font = `16px ${FONT_T}`; ctx.textAlign = "left"; outlinedText("RACHA", bx, by - 6, "#f7f0d5", `18px ${FONT_T}`, "left");
+    const bx = 14, by = H - 64; ctx.font = `16px ${FONT_T}`; ctx.textAlign = "left"; outlinedText("RACHA", bx, by - 6, "#f7f0d5", `18px ${FONT_T}`, "left");
     for (let k = 0; k < GALLOP_AT; k++) { const on = k < combo % GALLOP_AT || (combo > 0 && combo % GALLOP_AT === 0 && gallop > 0); R("#050814", bx + k * 16, by, 14, 14); R(on ? (k < 3 ? "#ffd34e" : "#31d7c7") : "#17213c", bx + k * 16 + 2, by + 2, 10, 10); }
     if (gallop > 0) outlinedText(`GALOPE x${gallop}`, bx + 110, by + 12, "#31d7c7", `18px ${FONT_T}`, "left");
     // teletipo
@@ -304,9 +307,9 @@
   function render() {
     const sh = shakeT > 0 ? [Math.round(rnd(-shakeM, shakeM)), Math.round(rnd(-shakeM, shakeM))] : [0, 0];
     drawBackground();
-    const topPx = blocks.length * BH + 64 + Math.min(60, n * 1.1) + 70, sFit = clamp(470 / topPx, .12, 1);
+    const topPx = blocks.length * BH + 64 + Math.min(60, n * 1.1) + 70, sFit = clamp((H - 130) / topPx, .12, 1);
     const e = state === "ending" ? (() => { const k = clamp((endT - .9) / 1.5, 0, 1); return k * k * (3 - 2 * k); })() : state === "over" ? 1 : 0;
-    const s = lerp(1, sFit, e), gy = lerp(GROUND_Y + camY, 560, e), ox = lerp(W / 2, 250, e);
+    const s = lerp(1, sFit, e), gy = lerp(GROUND_Y + camY, H - 40, e), ox = lerp(W / 2, PV ? W / 2 : 250, e);
     ctx.save(); ctx.translate(sh[0], sh[1]); ctx.translate(ox, gy); ctx.scale(s, s); ctx.translate(-W / 2, 0);
     drawGround();
     for (let i = 0; i < blocks.length; i++) drawBlock(blocks[i], i);
@@ -316,7 +319,7 @@
     else { const tb = blocks[blocks.length - 1]; fx = tb.x + tb.w / 2 + sway(blocks.length - 1); fy = -blocks.length * BH; }
     drawFlag(fx, fy);
     for (const p of particles) { ctx.globalAlpha = clamp(1 - p.t / p.life, 0, 1); R(p.color, p.x, p.y, p.s, p.s); } ctx.globalAlpha = 1;
-    for (const f of floats) { ctx.globalAlpha = clamp(1.7 - f.t / f.life * 1.7 + .2, 0, 1); outlinedText(f.text, f.x, f.y - 20, f.color, `${Math.round(22 / s)}px ${FONT_T}`); } ctx.globalAlpha = 1;
+    for (const f of floats) { ctx.globalAlpha = clamp(1.7 - f.t / f.life * 1.7 + .2, 0, 1); const ffont = `${Math.round(22 / s)}px ${FONT_T}`; let fxp = f.x; if (PV) { ctx.font = ffont; const hw = ctx.measureText(f.text).width / 2 + 8; fxp = clamp(f.x, hw, W - hw); } outlinedText(f.text, fxp, f.y - 20, f.color, ffont); } ctx.globalAlpha = 1;
     ctx.restore();
     for (const d of drones) drawDrone(d);
     if (e > .4) {
@@ -325,14 +328,14 @@
       ctx.globalAlpha = 1;
     }
     if (flashT > 0) { ctx.globalAlpha = clamp(flashT * 2.4, 0, .45); ctx.fillStyle = flashCol; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
-    if (gust > 0 && state === "playing" && !reduced) { ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < 12; i++) { const y = ((i * 97 + t * 90) % 520) + 60, x = ((i * 211 + t * 700) % (W + 200)) - 100; ctx.moveTo(x, y); ctx.lineTo(x + 50, y); } ctx.stroke(); }
+    if (gust > 0 && state === "playing" && !reduced) { ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < 12; i++) { const y = ((i * 97 + t * 90) % (H - 80)) + 60, x = ((i * 211 + t * 700) % (W + 200)) - 100; ctx.moveTo(x, y); ctx.lineTo(x + 50, y); } ctx.stroke(); }
     if (state === "playing" || state === "paused" || state === "title") drawHud();
     if (state === "playing" || state === "paused" || state === "title" || (state === "ending" && endT < .9)) {
       ctx.save(); ctx.translate(40, 52); const sp = bubble ? 1 : 0, bob = bubble ? Math.round(Math.sin(t * 14) * 1) : 0; ctx.translate(0, bob); ctx.scale(1.3, 1.3); R("#0b1126", -17, -33, 34, 62); drawBeard(ctx, sp); ctx.restore();
       outlinedText("EL JINETE", 40, 100, "#ffd34e", `16px ${FONT_T}`);
-      if (bubble) { ctx.font = `22px ${FONT_T}`; const w = Math.ceil(ctx.measureText(bubble.text).width) + 20, h = 28, bx = 72, by = 24; ctx.globalAlpha = clamp(Math.min(bubble.t / .12, (bubble.life - bubble.t) / .25, 1), 0, 1); R("#050814", bx - 3, by - 3, w + 6, h + 6); R("#f7f0d5", bx, by, w, h); ctx.fillStyle = "#f7f0d5"; ctx.beginPath(); ctx.moveTo(bx, by + 8); ctx.lineTo(bx - 8, by + 14); ctx.lineTo(bx, by + 18); ctx.closePath(); ctx.fill(); ctx.fillStyle = "#101629"; ctx.textAlign = "left"; ctx.fillText(bubble.text, bx + 10, by + 21); ctx.globalAlpha = 1; }
+      if (bubble) { ctx.font = `22px ${FONT_T}`; const bl = PV ? wrapT(bubble.text, W - 72 - 56 - 20) : [bubble.text], w = Math.ceil(Math.max(...bl.map(l => ctx.measureText(l).width))) + 20, h = 6 + bl.length * 22, bx = 72, by = 24; ctx.globalAlpha = clamp(Math.min(bubble.t / .12, (bubble.life - bubble.t) / .25, 1), 0, 1); R("#050814", bx - 3, by - 3, w + 6, h + 6); R("#f7f0d5", bx, by, w, h); ctx.fillStyle = "#f7f0d5"; ctx.beginPath(); ctx.moveTo(bx, by + 8); ctx.lineTo(bx - 8, by + 14); ctx.lineTo(bx, by + 18); ctx.closePath(); ctx.fill(); ctx.fillStyle = "#101629"; ctx.textAlign = "left"; bl.forEach((l, i) => ctx.fillText(l, bx + 10, by + 21 + i * 22)); ctx.globalAlpha = 1; }
     }
-    if (banner) { ctx.globalAlpha = clamp(Math.min(banner.t / .2, (banner.life - banner.t) / .5, 1), 0, 1); outlinedText(banner.text, W / 2, 190, "#ffd34e", `${banner.text.length > 14 ? 18 : 24}px ${FONT_PX}`); outlinedText(banner.sub, W / 2, 224, "#f7f0d5", `24px ${FONT_T}`); ctx.globalAlpha = 1; }
+    if (banner) { ctx.globalAlpha = clamp(Math.min(banner.t / .2, (banner.life - banner.t) / .5, 1), 0, 1); outlinedText(banner.text, W / 2, 190, "#ffd34e", `${banner.text.length > 14 ? (PV ? 15 : 18) : 24}px ${FONT_PX}`); outlinedText(banner.sub, W / 2, 224, "#f7f0d5", `${PV ? 20 : 24}px ${FONT_T}`); ctx.globalAlpha = 1; }
     if (state === "playing" && hint && t % 1.2 < .8) outlinedText(UI.drop && matchMedia("(hover:none)").matches ? "TOCA PARA SOLTAR" : "PULSA ESPACIO PARA SOLTAR", W / 2, 140, "#f7f0d5", `22px ${FONT_T}`);
   }
 

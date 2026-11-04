@@ -15,8 +15,9 @@
   const lerp = (a, b, t) => a + (b - a) * t;
 
   const canvas = $("#game"), ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
-  const W = 800, H = 600, GROUND = 548, PX = 210, FIXED = 1 / 120, SC = 2;
+  const PV = !!(window.SGV && SGV.portrait), W = PV ? SGV.W : 800, H = PV ? SGV.H : 600, GROUND = H - 52, PX = PV ? 110 : 210, FIXED = 1 / 120, SC = 2;   // PV: versión vertical 450×800
+  canvas.width = W; canvas.height = H; ctx.imageSmoothingEnabled = false;
+  const VS = PV ? .9 : 1, CRUISE_Y = Math.round(H * .55), CLY = PV ? 440 : 330;   // velocidad de scroll, altura de crucero y alto de las nubes decorativas
   const GRAV = 1350, FLAP = 400, MAXFALL = 640, PLANE_BOTTOM = 26;
   const mk = SPR.mk;
 
@@ -120,9 +121,9 @@
     const cx = 620; R(th.city, cx - 90, 150 - 34, 180, 34); for (let i = 0; i < 14; i++) { const ww = 90 - i * 6; R(th.city, cx - ww / 2, 150 - 34 - 18 + i, ww, 1); } R(th.city, cx - 26, 150 - 62, 52, 28); for (let i = 0; i < 26; i++) { const half = Math.round(26 * Math.sqrt(1 - (i / 26) ** 2)); R(th.city, cx - half, 150 - 62 - i, half * 2, 1); } R("#c9d2e8", cx, 150 - 108, 1, 20);
     const [h2, g2] = mk(1200, 90); g2.fillStyle = th.hill; g2.beginPath(); g2.moveTo(0, 90); for (let x = 0; x <= 1200; x += 20) g2.lineTo(x, 40 + Math.sin(x * .012) * 18 + Math.sin(x * .031) * 10); g2.lineTo(1200, 90); g2.fill();
     backdrop = { city: c, hills: h2 };
-    stars = th.stars ? Array.from({ length: 60 }, () => ({ x: rnd(0, W), y: rnd(0, 300), p: rnd(0, 6) })) : [];
+    stars = th.stars ? Array.from({ length: 60 }, () => ({ x: rnd(0, W), y: rnd(0, PV ? 520 : 300), p: rnd(0, 6) })) : [];
     rain = th.rain ? Array.from({ length: 140 }, () => ({ x: rnd(0, W + 200), y: rnd(0, H), s: rnd(560, 800) })) : [];
-    clouds = Array.from({ length: 9 }, () => ({ x: rnd(0, W), y: rnd(20, 330), w: rnd(60, 150), v: rnd(.12, .3) }));
+    clouds = Array.from({ length: 9 }, () => ({ x: rnd(0, W), y: rnd(20, CLY), w: rnd(60, 150), v: rnd(.12, .3) }));
   }
   function startTrip(n, fresh) { if (window.SGS) SGS.begin("flappy-falcon");
     n = Math.min(n, TRIPS.length); tripN = n; trip = { ...TRIPS[n - 1] };
@@ -130,9 +131,9 @@
     if (fresh) score = 0;
     obstacles = []; pickups = []; particles = []; floats = []; bubbles = [];
     plane = { y: GROUND - PLANE_BOTTOM, vy: 0, ang: 0, flapT: 0, shield: false, invuln: 0, turbo: 0, dead: false, tie: 0, trail: 0, hitT: 0 };
-    runway = { x: PX - 150, len: 560, y: GROUND, takeoff: true }; tower = { x: PX - 230 };
+    runway = { x: PX - 150, len: 560, y: GROUND, takeoff: true }; tower = { x: PX - (PV ? 100 : 230) };
     phase = "takeoff"; phaseT = 0; t = 0; scrollX = 0; speed = 0; passed = 0; spawned = 0; votes = 0; votesSeen = 0; votesGot = 0; tripScore0 = score; streak = 0; perfect = false; gust = null; gustT = rnd(6, 10);
-    flash = 0; thunderT = rnd(4, 9); paT = 0; paCD = rnd(7, 11); bannerT = 3; tipT = trip.tip ? 6.5 : 0; lastCy = 300; quipCD = rnd(5, 9); flapHeld = false;
+    flash = 0; thunderT = rnd(4, 9); paT = 0; paCD = rnd(7, 11); bannerT = 3; tipT = trip.tip ? 6.5 : 0; lastCy = H / 2; quipCD = rnd(5, 9); flapHeld = false;
     buildBackdrop(); music.setLevel(n); music.setMode(0); updateHud();
   }
   function updateHud() { UI.trip.textContent = tripN; UI.score.textContent = pad(score, 5); UI.votes.textContent = pad(votes, 2); UI.leg.textContent = trip.endless ? `${passed}` : `${Math.min(passed, trip.K)}/${trip.K}`; }
@@ -246,18 +247,18 @@
     if (state !== "playing") return;
     t += dt; phaseT += dt; bannerT = Math.max(0, bannerT - dt); tipT = Math.max(0, tipT - dt); paT = Math.max(0, paT - dt); shakeT = Math.max(0, shakeT - dt); landMsgT = Math.max(0, landMsgT - dt);
     const tur = plane.turbo > 0 ? 1.7 : 1;
-    if (phase === "takeoff") { speed = params().speed * Math.min(1, phaseT / 1); }
-    else if (phase === "cruise" || phase === "ready") speed = params().speed * tur;
-    else if (phase === "approach") speed = lerp(speed, 125, Math.min(1, dt * .8));
+    if (phase === "takeoff") { speed = params().speed * VS * Math.min(1, phaseT / 1); }
+    else if (phase === "cruise" || phase === "ready") speed = params().speed * VS * tur;
+    else if (phase === "approach") speed = lerp(speed, 125 * VS, Math.min(1, dt * .8));
     else if (phase === "rollout") speed = Math.max(0, speed - 120 * dt);
     else if (phase === "crash") speed = Math.max(0, speed - 200 * dt);
     scrollX += speed * dt;
     // --- fases
     if (phase === "takeoff") {
-      plane.y = phaseT < .8 ? GROUND - PLANE_BOTTOM : lerp(GROUND - PLANE_BOTTOM, 330, Math.min(1, (phaseT - .8) / .9)); plane.ang = phaseT < .8 ? 0 : -14; plane.vy = 0; plane.tie += dt * 12;
+      plane.y = phaseT < .8 ? GROUND - PLANE_BOTTOM : lerp(GROUND - PLANE_BOTTOM, CRUISE_Y, Math.min(1, (phaseT - .8) / .9)); plane.ang = phaseT < .8 ? 0 : -14; plane.vy = 0; plane.tie += dt * 12;
       if (phaseT > .8 && phaseT < .85) { sfx.turbo(); }
-      if (phaseT >= 1.7) { phase = "ready"; phaseT = 0; plane.vy = 0; plane.y = 330; plane.ang = -8; announce(`Despegue completado. Destino: ${trip.name}.`); }
-    } else if (phase === "ready") { plane.y = 330 + Math.sin(t * 4) * 9; plane.ang = -6 + Math.sin(t * 4) * 3; plane.tie += dt * 12; plane.flapT = Math.max(0, plane.flapT - dt); }
+      if (phaseT >= 1.7) { phase = "ready"; phaseT = 0; plane.vy = 0; plane.y = CRUISE_Y; plane.ang = -8; announce(`Despegue completado. Destino: ${trip.name}.`); }
+    } else if (phase === "ready") { plane.y = CRUISE_Y + Math.sin(t * 4) * 9; plane.ang = -6 + Math.sin(t * 4) * 3; plane.tie += dt * 12; plane.flapT = Math.max(0, plane.flapT - dt); }
     else if (phase === "cruise" || phase === "approach") updatePlane(dt);
     else if (phase === "crash") { plane.vy = Math.min(700, plane.vy + GRAV * dt); plane.y += plane.vy * dt; plane.ang += 340 * dt; if (plane.y > GROUND - 8) { plane.y = GROUND - 8; if (phaseT > .4 && state === "playing") { phase = "done"; setTimeout(() => state === "playing" && gameOver(), 450); } } if (Math.random() < .5) particles.push({ x: PX + rnd(-10, 20), y: plane.y + rnd(-6, 6), vx: -speed * .5 + rnd(-30, 30), vy: rnd(-60, -20), t: 0, life: .8, color: pick(["#3a3a4a", "#6b6b7b", "#ff7a2e"]), g: -20, s: 5 }); }
     else if (phase === "rollout") { plane.y = GROUND - PLANE_BOTTOM; plane.ang = lerp(plane.ang, 0, Math.min(1, dt * 8)); plane.vy = 0; if (speed < 1 && phaseT > .8 && state === "playing") { phase = "done"; tripComplete(tdVel()); } if (Math.random() < .6) particles.push({ x: PX - 8, y: GROUND - 2, vx: -speed * .6, vy: rnd(-40, -10), t: 0, life: .5, color: "#c9c2a8", g: 0, s: 4 }); }
@@ -291,7 +292,7 @@
     for (const p of particles) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += p.g * dt; } particles = particles.filter(p => p.t < p.life);
     for (const f of floats) { f.t += dt; f.y -= 28 * dt; } floats = floats.filter(f => f.t < f.life);
     for (const b of bubbles) b.t += dt; bubbles = bubbles.filter(b => b.t < b.life);
-    for (const c of clouds) { c.x -= (c.v * 60 + speed * .12) * dt; if (c.x < -c.w - 20) { c.x = W + 20; c.y = rnd(20, 330); } }
+    for (const c of clouds) { c.x -= (c.v * 60 + speed * .12) * dt; if (c.x < -c.w - 20) { c.x = W + 20; c.y = rnd(20, CLY); } }
     for (const o of obstacles) o.zap = Math.max(0, o.zap - dt);
     if (rain.length) { for (const r of rain) { r.y += r.s * dt; r.x -= (r.s * .25 + speed * .5) * dt; if (r.y > H) { r.y = -10; r.x = rnd(0, W + 220); } } thunderT -= dt; if (thunderT <= 0) { thunderT = rnd(5, 11); flash = reduced ? 0 : .9; setTimeout(() => sfx.thunder(), 300); if (obstacles.length) pick(obstacles).zap = .35; } flash = Math.max(0, flash - dt * 2.2); }
     music.setMode(phase === "approach" ? 2 : (plane.turbo > 0 || passed >= trip.K * .6 || (trip.endless && passed >= 8)) ? 1 : 0);
@@ -315,7 +316,7 @@
   function drawSky() {
     const th = trip.themeObj, gr = ctx.createLinearGradient(0, 0, 0, GROUND); gr.addColorStop(0, th.top); gr.addColorStop(1, th.bot); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
     for (const s of stars) { ctx.fillStyle = `rgba(247,240,213,${(.4 + .6 * Math.abs(Math.sin(t * 1.4 + s.p))).toFixed(2)})`; ctx.fillRect(Math.round(s.x), Math.round(s.y), 2, 2); }
-    if (th.sun) { const sx = 620, sy = trip.theme === "night" ? 90 : trip.theme === "day" ? 100 : 210; ctx.fillStyle = th.sun; ctx.beginPath(); ctx.arc(sx, sy, 34, 0, 7); ctx.fill(); ctx.fillStyle = "rgba(255,255,255,.12)"; ctx.beginPath(); ctx.arc(sx, sy, 56, 0, 7); ctx.fill(); }
+    if (th.sun) { const sx = PV ? W - 100 : 620, sy = trip.theme === "night" ? 90 : trip.theme === "day" ? 100 : 210; ctx.fillStyle = th.sun; ctx.beginPath(); ctx.arc(sx, sy, 34, 0, 7); ctx.fill(); ctx.fillStyle = "rgba(255,255,255,.12)"; ctx.beginPath(); ctx.arc(sx, sy, 56, 0, 7); ctx.fill(); }
     for (const c of clouds) { ctx.fillStyle = th.cloud === "#8c97b8" ? "rgba(255,255,255,.28)" : "rgba(255,255,255,.14)"; const x = Math.round(c.x), y = Math.round(c.y); ctx.fillRect(x, y, c.w, 10); ctx.fillRect(x + 12, y - 8, c.w - 30, 10); ctx.fillRect(x + 6, y + 10, c.w - 14, 6); }
     const ho = -((scrollX * .18) % 1200); for (let i = 0; i < 2; i++) ctx.drawImage(backdrop.hills, Math.round(ho + i * 1200), GROUND - 90);
     const co = -((scrollX * .34) % 1200); for (let i = 0; i < 2; i++) ctx.drawImage(backdrop.city, Math.round(co + i * 1200), GROUND - 150);
@@ -362,8 +363,8 @@
   }
   function drawEffects() {
     for (const p of particles) { ctx.globalAlpha = clamp(1 - p.t / p.life, 0, 1); ctx.fillStyle = p.color; ctx.fillRect(Math.round(p.x), Math.round(p.y), p.s, p.s); } ctx.globalAlpha = 1;
-    for (const f of floats) { ctx.globalAlpha = clamp(1.7 - f.t / f.life * 1.7 + .2, 0, 1); outlinedText(f.text, f.x, f.y, f.color, `9px ${FONT_PX}`); } ctx.globalAlpha = 1;
-    if (gust) { const a = gust.on ? .5 : (Math.floor(gust.t * 8) % 2 ? .9 : .3); ctx.globalAlpha = a; ctx.fillStyle = "#f7f0d5"; for (let i = 0; i < 5; i++) { const y = gust.dir < 0 ? 80 + i * 90 : 520 - i * 90; ctx.fillRect(W - 80, y, 36, 5); ctx.fillRect(W - 54, y + (gust.dir < 0 ? -8 : 8), 5, 5); } ctx.globalAlpha = 1; if (!gust.on) outlinedText(gust.dir < 0 ? "RACHA ASCENDENTE" : "RACHA DESCENDENTE", W / 2, 140, "#ff7a2e", `9px ${FONT_PX}`); else if (gust.on) { ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 2; for (let i = 0; i < 10; i++) { const y = ((t * 300 * gust.dir + i * 60) % 560 + 560) % 560; ctx.beginPath(); ctx.moveTo(100 + i * 60, y); ctx.lineTo(100 + i * 60, y + 24 * gust.dir); ctx.stroke(); } } }
+    for (const f of floats) { ctx.globalAlpha = clamp(1.7 - f.t / f.life * 1.7 + .2, 0, 1); let fxp = f.x; if (PV) { ctx.font = `9px ${FONT_PX}`; const hw = ctx.measureText(f.text).width / 2 + 6; fxp = clamp(f.x, hw, W - hw); } outlinedText(f.text, fxp, f.y, f.color, `9px ${FONT_PX}`); } ctx.globalAlpha = 1;
+    if (gust) { const a = gust.on ? .5 : (Math.floor(gust.t * 8) % 2 ? .9 : .3); ctx.globalAlpha = a; ctx.fillStyle = "#f7f0d5"; for (let i = 0; i < 5; i++) { const y = gust.dir < 0 ? 80 + i * 90 : H - 80 - i * 90; ctx.fillRect(W - 80, y, 36, 5); ctx.fillRect(W - 54, y + (gust.dir < 0 ? -8 : 8), 5, 5); } ctx.globalAlpha = 1; if (!gust.on) outlinedText(gust.dir < 0 ? "RACHA ASCENDENTE" : "RACHA DESCENDENTE", W / 2, 140, "#ff7a2e", `9px ${FONT_PX}`); else if (gust.on) { ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 2; for (let i = 0; i < 10; i++) { const gh = H - 40, gx = (PV ? 20 : 100) + i * (PV ? 40 : 60), y = ((t * 300 * gust.dir + i * 60) % gh + gh) % gh; ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + 24 * gust.dir); ctx.stroke(); } } }
     if (rain.length) { ctx.strokeStyle = "rgba(190,210,255,.45)"; ctx.lineWidth = 1.5; ctx.beginPath(); for (const r of rain) { ctx.moveTo(Math.round(r.x), Math.round(r.y)); ctx.lineTo(Math.round(r.x - 8), Math.round(r.y + 16)); } ctx.stroke(); if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${(flash * .5).toFixed(2)})`; ctx.fillRect(0, 0, W, H); } }
   }
   function drawBubble() {
@@ -390,15 +391,16 @@
     for (const o of obstacles) drawObstacle(o); for (const p of pickups) drawPickup(p);
     drawPlane(); drawEffects(); drawBubble(); ctx.restore();
     drawHud();
-    if (paT > 0) { ctx.globalAlpha = clamp(Math.min(paT / .3, (4.2 - paT) / .2, 1), 0, 1); ctx.font = `21px ${FONT_T}`; const w = Math.min(740, Math.ceil(ctx.measureText(paText).width) + 28), x = Math.round((W - w) / 2), y = 88; ctx.fillStyle = "#050814"; ctx.fillRect(x - 3, y - 3, w + 6, 36); ctx.fillStyle = "#17213c"; ctx.fillRect(x, y, w, 30); ctx.fillStyle = "#ffd34e"; ctx.fillRect(x, y, 6, 30); ctx.fillStyle = "#f7f0d5"; ctx.textAlign = "left"; ctx.fillText(paText, x + 16, y + 22, w - 28); ctx.globalAlpha = 1; }
-    if (bannerT > 0) { ctx.globalAlpha = clamp(bannerT / .5, 0, 1); outlinedText(`VIAJE ${tripN}`, W / 2, 210, "#ffd34e", `22px ${FONT_PX}`); outlinedText(`DESTINO: ${trip.name}`, W / 2, 246, "#f7f0d5", `12px ${FONT_PX}`); ctx.font = `22px ${FONT_T}`; ctx.fillStyle = "#050814"; ctx.fillText(trip.sub, W / 2 + 1, 281); ctx.fillStyle = "#aab4d5"; ctx.fillText(trip.sub, W / 2, 280); ctx.globalAlpha = 1; }
+    if (paT > 0) { ctx.globalAlpha = clamp(Math.min(paT / .3, (4.2 - paT) / .2, 1), 0, 1); ctx.font = `21px ${FONT_T}`; const pl = PV ? wrapLines(paText, W - 62) : [paText], w = Math.min(PV ? W - 20 : 740, Math.ceil(Math.max(...pl.map(l => ctx.measureText(l).width))) + 28), x = Math.round((W - w) / 2), y = 88, ph = 6 + pl.length * 24; ctx.fillStyle = "#050814"; ctx.fillRect(x - 3, y - 3, w + 6, ph + 6); ctx.fillStyle = "#17213c"; ctx.fillRect(x, y, w, ph); ctx.fillStyle = "#ffd34e"; ctx.fillRect(x, y, 6, ph); ctx.fillStyle = "#f7f0d5"; ctx.textAlign = "left"; pl.forEach((l, i) => ctx.fillText(l, x + 16, y + 22 + i * 24, w - 28)); ctx.globalAlpha = 1; }
+    if (bannerT > 0) { ctx.globalAlpha = clamp(bannerT / .5, 0, 1); outlinedText(`VIAJE ${tripN}`, W / 2, 210, "#ffd34e", `22px ${FONT_PX}`); outlinedText(`DESTINO: ${trip.name}`, W / 2, 246, "#f7f0d5", `${PV && trip.name.length > 12 ? 10 : 12}px ${FONT_PX}`); ctx.font = `22px ${FONT_T}`; ctx.fillStyle = "#050814"; ctx.fillText(trip.sub, W / 2 + 1, 281); ctx.fillStyle = "#aab4d5"; ctx.fillText(trip.sub, W / 2, 280); ctx.globalAlpha = 1; }
     if (tipT > 0 && bannerT <= 0 && trip.tip) drawTip(trip.tip, clamp(tipT / .4, 0, 1));
     if (phase === "ready" && bannerT <= 0 && Math.floor(t * 2.5) % 2) outlinedText("TOCA PARA DAR GAS", W / 2, 230, "#3cff7a", `14px ${FONT_PX}`);
     if (landMsgT > 0 && Math.floor(landMsgT * 4) % 2) outlinedText("APROXIMACION: SIGUE LAS LUCES", W / 2, 150, "#3cff7a", `10px ${FONT_PX}`);
   }
+  function wrapLines(text, maxW) { const words = text.split(" "), out = []; let cur = ""; for (const w of words) { const test = cur ? cur + " " + w : w; if (ctx.measureText(test).width > maxW && cur) { out.push(cur); cur = w; } else cur = test; } if (cur) out.push(cur); return out; }
   function drawTip(txt, a) {
-    ctx.globalAlpha = a; ctx.font = `21px ${FONT_T}`; const words = txt.split(" "), lines = [""]; for (const w of words) { const s = lines[lines.length - 1] ? lines[lines.length - 1] + " " + w : w; if (ctx.measureText(s).width > 600) lines.push(w); else lines[lines.length - 1] = s; }
-    const h = 12 + lines.length * 24, y = 120; ctx.fillStyle = "#050814"; ctx.fillRect(82, y - 3, 636, h + 6); ctx.fillStyle = "#17213c"; ctx.fillRect(85, y, 630, h); ctx.fillStyle = "#31d7c7"; ctx.fillRect(85, y, 6, h); ctx.fillStyle = "#f7f0d5"; ctx.textAlign = "left"; lines.forEach((l, i) => ctx.fillText(l, 104, y + 24 + i * 24)); ctx.globalAlpha = 1;
+    ctx.globalAlpha = a; ctx.font = `21px ${FONT_T}`; const words = txt.split(" "), lines = [""]; for (const w of words) { const s = lines[lines.length - 1] ? lines[lines.length - 1] + " " + w : w; if (ctx.measureText(s).width > (PV ? W - 60 : 600)) lines.push(w); else lines[lines.length - 1] = s; }
+    const h = 12 + lines.length * 24, y = 120, bx = PV ? 10 : 85, bw = PV ? W - 20 : 630; ctx.fillStyle = "#050814"; ctx.fillRect(bx - 3, y - 3, bw + 6, h + 6); ctx.fillStyle = "#17213c"; ctx.fillRect(bx, y, bw, h); ctx.fillStyle = "#31d7c7"; ctx.fillRect(bx, y, 6, h); ctx.fillStyle = "#f7f0d5"; ctx.textAlign = "left"; lines.forEach((l, i) => ctx.fillText(l, bx + 19, y + 24 + i * 24)); ctx.globalAlpha = 1;
   }
 
   /* ----------------------------------------------------------------- bucle */

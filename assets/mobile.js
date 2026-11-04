@@ -4,6 +4,17 @@
    · El lienzo se reajusta a su proporción sin deformar, para que los toques sigan acertando.
    · En móvil: vibración ligera en los botones y la pantalla no se apaga mientras se juega. */
 (() => {
+  /* Modo vertical de verdad (solo en las páginas con data-vertical en este script): en un móvil en vertical el lienzo pasa a 450×800 y cada juego recoloca su escena.
+     ?vista=vertical / ?vista=horizontal fuerzan un modo para probar. Al girar el móvil de forma sostenida se recarga la página con el modo correcto. */
+  const qv = new URLSearchParams(location.search).get("vista"), optIn = !!(document.currentScript && document.currentScript.hasAttribute("data-vertical"));
+  const wantPortrait = () => qv === "vertical" ? true : qv === "horizontal" ? false : matchMedia("(orientation: portrait) and (max-width: 700px)").matches;
+  const V = window.SGV = { on: optIn, portrait: optIn && wantPortrait(), W: 450, H: 800 };
+  if (V.portrait) document.documentElement.classList.add("pv");
+  if (optIn && !qv) {   // solo al girar el móvil (no con "resize": el teclado del ranking también cambia el alto); y nunca mientras se escribe
+    let tm = 0; const chk = () => { clearTimeout(tm); tm = setTimeout(() => { const a = document.activeElement; if (a && /^(input|textarea|select)$/i.test(a.tagName)) return; if (wantPortrait() !== V.portrait) location.reload(); }, 700); };
+    addEventListener("orientationchange", chk); try { screen.orientation.addEventListener("change", chk); } catch { /* sin API */ }
+  }
+
   const toolbar = document.querySelector(".toolbar"), box = document.querySelector(".screen"), cv = document.getElementById("game"); if (!toolbar || !box || !cv) return;
   const touch = navigator.maxTouchPoints > 0 && (matchMedia("(pointer:coarse)").matches || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
   const btn = document.createElement("button"); btn.id = "fs"; btn.type = "button"; btn.className = "small-button"; btn.textContent = "PANTALLA COMPLETA"; btn.setAttribute("aria-pressed", "false"); toolbar.appendChild(btn);
@@ -12,7 +23,7 @@
   let auto = false, suppress = false;
   const isFs = () => document.body.classList.contains("fs");
   function fit() {
-    if (!isFs()) { cv.style.width = ""; cv.style.height = ""; return; }
+    if (!isFs() && !V.portrait) { cv.style.width = ""; cv.style.height = ""; return; }
     const hud = box.querySelector(".hud"), availW = box.clientWidth, availH = box.clientHeight - (hud ? hud.offsetHeight : 0) - 2, ratio = cv.width / cv.height, w = Math.max(100, Math.min(availW, availH * ratio));
     cv.style.width = Math.floor(w) + "px"; cv.style.height = Math.floor(w / ratio) + "px";
   }
@@ -39,7 +50,8 @@
   document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && isFs() && !auto) exit(); });
   addEventListener("resize", sync); addEventListener("orientationchange", () => setTimeout(sync, 250));
   addEventListener("keydown", e => { if (e.code === "KeyF" && !e.ctrlKey && !e.metaKey && !/input|textarea/i.test((e.target || {}).tagName || "")) { if (isFs()) { suppress = true; auto = false; exit(); } else enter(); } });
-  sync();
+  sync(); V.fit = fit;
+  if (V.portrait) { addEventListener("load", fit); requestAnimationFrame(fit); setTimeout(fit, 300); }
 
   /* detalles de móvil */
   if (touch) {
