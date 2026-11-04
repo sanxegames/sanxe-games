@@ -17,6 +17,7 @@ const GAMES = {
 const ORIGINS = new Set(["https://sanxegames.es", "https://www.sanxegames.es", "http://localhost:8149", "http://127.0.0.1:8149"]);
 const BLOCK = new Set(["ASS", "CUM", "FAG", "FUC", "FUK", "KKK", "NIG", "NZI", "SEX", "TIT", "PTA", "PUT", "PUS"]);
 const BOT = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|node/i;
+const KINDS = { contacto: "Contacto", retirada: "Retirada de contenido", error: "Error o sugerencia", ranking: "Ranking: quitar una entrada" };
 const MIN_AGE = 4000, MAX_AGE = 6 * 3600 * 1000, HOUR_LIMIT = 12, DAY_LIMIT = 40;
 
 const enc = new TextEncoder();
@@ -46,6 +47,9 @@ async function readToken(env, tok) {
   const [p, sig] = tok.split("."); if (!p || !sig || sig !== await hmac(env.SIGNING_SECRET, p)) return null;
   try { const o = JSON.parse(new TextDecoder().decode(unb64u(p))); return GAMES[o.g] && Number.isFinite(o.ts) && typeof o.n === "string" ? o : null; } catch { return null; }
 }
+const isAdmin = (env, k) => !!env.STATS_KEY && typeof k === "string" && k.length === env.STATS_KEY.length && k === env.STATS_KEY;
+async function isBlocked(env, name) { try { return !!(await env.DB.prepare("SELECT 1 FROM blocked WHERE name = ?1").bind(name).first()); } catch { return false; } }
+const fmtTs = ms => new Date(ms).toISOString().replace("T", " ").slice(0, 16);
 function cleanName(raw) { const n = String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); return n.length === 3 && !BLOCK.has(n) ? n : null; }
 const publicRow = (g, r, i) => ({ rank: i + 1, name: r.name, score: r.score, lv: r.lv, reason: r.reason != null ? (GAMES[g].reasons[r.reason] || "") : "", ts: r.ts });
 
@@ -53,6 +57,35 @@ async function top(env, game, limit) {
   const { results } = await env.DB.prepare("SELECT name, score, lv, reason, ts FROM scores WHERE game = ?1 ORDER BY score DESC, ts ASC LIMIT ?2").bind(game, limit).all();
   return results.map((r, i) => publicRow(game, r, i));
 }
+
+const ADMIN_HTML = `<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Sanxe admin</title>
+<style>body{background:#0b1021;color:#f7f0d5;font:17px/1.35 monospace;margin:20px;max-width:980px}h1{color:#ffd34e}h2{color:#31d7c7;margin-top:30px}h3{color:#ffd34e;margin:18px 0 6px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #27345b;padding:5px 9px;text-align:left;vertical-align:top}th{color:#aab4d5}
+button{background:#17213c;color:#f7f0d5;border:2px solid #27345b;padding:4px 9px;font:inherit;cursor:pointer}button:hover{border-color:#ff4d61;color:#ff4d61}.m{border:1px solid #27345b;padding:10px;margin:8px 0;background:#101629}.m small{color:#aab4d5}.m p{white-space:pre-wrap;margin:6px 0}.seed{color:#6b789f}.tag{display:inline-block;border:1px solid #ffd34e;color:#ffd34e;padding:0 6px;margin-right:6px}#st{position:fixed;right:14px;top:14px;background:#ffd34e;color:#101629;padding:6px 12px;display:none}.chip{display:inline-block;border:1px solid #ff4d61;padding:2px 8px;margin:2px}a{color:#31d7c7}</style>
+<h1>SANXE GAMES · admin</h1><p><a id="back" href="#">&laquo; Estadísticas</a></p><div id="st"></div>
+<h2>Mensajes (<span id="nm"></span>)</h2><div id="msgs"></div>
+<h2>Iniciales bloqueadas</h2><p id="blk"></p><p><button id="seeds">Borrar todas las entradas de relleno (seed)</button></p>
+<h2>Ranking</h2><p>Borrar una fila la quita del ranking. «Bloquear» borra todas las entradas con esas iniciales en todos los juegos y evita que vuelvan a usarse.</p><div id="boards"></div>
+<script>
+const D=__DATA__,K=new URLSearchParams(location.search).get("k"),$=id=>document.getElementById(id);
+$("back").href="/stats?k="+encodeURIComponent(K);
+const e=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function note(t){const s=$("st");s.textContent=t;s.style.display="block";setTimeout(()=>s.style.display="none",2500)}
+async function act(o,ok){const r=await fetch("/admin/do",{method:"POST",headers:{"Content-Type":"application/json","X-Admin-Key":K},body:JSON.stringify(o)}).then(r=>r.json()).catch(()=>null);if(r&&r.ok){note("Hecho"+(r.removed!=null?" · "+r.removed+" entradas":""));ok&&ok(r)}else note("Error")}
+function render(){
+ $("nm").textContent=D.msgs.length;
+ $("msgs").innerHTML=D.msgs.map(m=>'<div class="m"><span class="tag">'+e(m.kindLabel)+'</span><small>'+m.when+' UTC'+(m.reply?' · responder a: <b>'+e(m.reply)+'</b>':' · sin contacto')+'</small><p>'+e(m.msg)+'</p><button data-del-msg="'+m.id+'">Borrar</button></div>').join("")||"<p>Sin mensajes.</p>";
+ $("blk").innerHTML=D.blocked.map(n=>'<span class="chip">'+e(n)+' <button data-unblock="'+e(n)+'">x</button></span>').join("")||"Ninguna.";
+ $("boards").innerHTML=D.boards.map(b=>'<h3>'+e(b.label)+' <small>('+e(b.unit)+')</small></h3><table><tr><th>#</th><th>Iniciales</th><th>Puntos</th><th>Fecha</th><th></th></tr>'+b.rows.map((r,i)=>'<tr class="'+(r.seed?'seed':'')+'"><td>'+(i+1)+'</td><td>'+e(r.name)+(r.seed?' (seed)':'')+'</td><td>'+r.score+'</td><td>'+new Date(r.ts).toISOString().slice(0,16).replace("T"," ")+'</td><td><button data-del="'+r.id+'">Borrar</button> <button data-block="'+e(r.name)+'">Bloquear</button></td></tr>').join("")+'</table>').join("");
+}
+document.addEventListener("click",ev=>{const t=ev.target;if(t.tagName!=="BUTTON")return;
+ if(t.dataset.del)act({do:"delscore",id:+t.dataset.del},()=>{D.boards.forEach(b=>b.rows=b.rows.filter(r=>r.id!=+t.dataset.del));render()});
+ else if(t.dataset.delMsg)act({do:"delmsg",id:+t.dataset.delMsg},()=>{D.msgs=D.msgs.filter(m=>m.id!=+t.dataset.delMsg);render()});
+ else if(t.dataset.block){if(confirm("¿Bloquear "+t.dataset.block+" y borrar todas sus entradas?"))act({do:"block",name:t.dataset.block},()=>{const n=t.dataset.block;D.boards.forEach(b=>b.rows=b.rows.filter(r=>r.name!==n));if(!D.blocked.includes(n))D.blocked.push(n);render()})}
+ else if(t.dataset.unblock)act({do:"unblock",name:t.dataset.unblock},()=>{D.blocked=D.blocked.filter(n=>n!==t.dataset.unblock);render()});
+ else if(t.id==="seeds"){if(confirm("¿Borrar todas las entradas de relleno?"))act({do:"delseed"},()=>location.reload())}
+});
+render();
+</script></html>`;
 
 export default {
   async fetch(req, env) {
@@ -75,6 +108,10 @@ export default {
             const ref = (url.searchParams.get("r") || "").toLowerCase(); await upsertEv(env, "visit"); await upsertEv(env, "ref:" + (/^[a-z0-9.-]{1,60}$/.test(ref) ? ref : "directo"));
           }
           if (Math.random() < .03) await env.DB.prepare("DELETE FROM visits WHERE day < ?1").bind(new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10)).run();
+          const cut = nowMs() - 172800000;
+          await env.DB.prepare("UPDATE scores SET iph = NULL WHERE iph IS NOT NULL AND ts < ?1").bind(cut).run();
+          await env.DB.prepare("UPDATE contact SET iph = NULL WHERE iph IS NOT NULL AND ts < ?1").bind(cut).run();
+          await env.DB.prepare("DELETE FROM contact WHERE ts < ?1").bind(nowMs() - 180 * 86400000).run();
         }
         const r = await env.DB.prepare("SELECT n FROM counters WHERE k = 'visits'").first(); return json(req, { ok: true, total: r ? r.n : 0 });
       }
@@ -92,8 +129,46 @@ export default {
         const rows = Object.keys(GAMES).map(g => `<tr><td>${esc(GAMES[g].label)}</td>${["play", "over", "share", "reto"].map(e => `<td>${cell(e + ":" + g, "d")} / ${cell(e + ":" + g, "w")} / ${cell(e + ":" + g, "n")}</td>`).join("")}</tr>`).join("");
         const refs = all.filter(r => r.k.startsWith("ref:")).sort((a, b) => b.n - a.n).slice(0, 20).map(r => `<tr><td>${esc(r.k.slice(4))}</td><td>${r.d}</td><td>${r.w}</td><td>${r.n}</td></tr>`).join("");
         const total = (await env.DB.prepare("SELECT n FROM counters WHERE k = 'visits'").first());
-        const html = `<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>Sanxe stats</title><style>body{background:#0b1021;color:#f7f0d5;font:18px/1.3 monospace;margin:24px}h1{color:#ffd34e}h2{color:#31d7c7;margin-top:28px}table{border-collapse:collapse}td,th{border:1px solid #27345b;padding:6px 12px;text-align:left}th{color:#aab4d5}</style><h1>SANXE GAMES · estadísticas</h1><p>Visitantes únicos (acumulado): <b>${total ? total.n : 0}</b> · valores como hoy / 7 días / total</p><h2>Visitantes por día</h2><table><tr><th>Día</th><th>Visitantes</th></tr>${days.map(r => `<tr><td>${r.day}</td><td>${r.n}</td></tr>`).join("")}</table><h2>Juegos</h2><table><tr><th>Juego</th><th>Partidas iniciadas</th><th>Partidas terminadas</th><th>Compartidos</th><th>Retos abiertos</th></tr>${rows}</table><p>Compartidos de la portada: ${cell("share:web", "d")} / ${cell("share:web", "w")} / ${cell("share:web", "n")}</p><h2>Orígenes de las visitas</h2><table><tr><th>Origen</th><th>Hoy</th><th>7 días</th><th>Total</th></tr>${refs || "<tr><td colspan=4>Aún sin datos</td></tr>"}</table>`;
+        const html = `<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>Sanxe stats</title><style>body{background:#0b1021;color:#f7f0d5;font:18px/1.3 monospace;margin:24px}h1{color:#ffd34e}h2{color:#31d7c7;margin-top:28px}table{border-collapse:collapse}td,th{border:1px solid #27345b;padding:6px 12px;text-align:left}th{color:#aab4d5}</style><h1>SANXE GAMES · estadísticas</h1><p><a style="color:#31d7c7" href="/admin?k=${encodeURIComponent(url.searchParams.get("k"))}">Mensajes y moderación del ranking &raquo;</a></p><p>Visitantes únicos (acumulado): <b>${total ? total.n : 0}</b> · valores como hoy / 7 días / total</p><h2>Visitantes por día</h2><table><tr><th>Día</th><th>Visitantes</th></tr>${days.map(r => `<tr><td>${r.day}</td><td>${r.n}</td></tr>`).join("")}</table><h2>Juegos</h2><table><tr><th>Juego</th><th>Partidas iniciadas</th><th>Partidas terminadas</th><th>Compartidos</th><th>Retos abiertos</th></tr>${rows}</table><p>Compartidos de la portada: ${cell("share:web", "d")} / ${cell("share:web", "w")} / ${cell("share:web", "n")}</p><h2>Orígenes de las visitas</h2><table><tr><th>Origen</th><th>Hoy</th><th>7 días</th><th>Total</th></tr>${refs || "<tr><td colspan=4>Aún sin datos</td></tr>"}</table>`;
         return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
+      }
+      if (req.method === "POST" && path === "/contact") {   // formulario anónimo de contacto / retirada de contenido
+        const raw = await req.text(); if (raw.length > 3000) return fail(req, "size", 413);
+        let b; try { b = JSON.parse(raw); } catch { return fail(req, "json"); }
+        if (b.web) return json(req, { ok: true });   // campo trampa para bots: se finge éxito
+        const kind = KINDS[b.kind] ? b.kind : "contacto", msg = String(b.msg || "").replace(/\r/g, "").trim(), reply = String(b.reply || "").trim();
+        if (msg.length < 10) return fail(req, "short"); if (msg.length > 1500 || reply.length > 160) return fail(req, "long");
+        if (/https?:\/\/\S+[\s\S]*https?:\/\/\S+[\s\S]*https?:\/\/\S+/i.test(msg)) return fail(req, "spam");
+        const ip = req.headers.get("CF-Connecting-IP") || "0", day = new Date().toISOString().slice(0, 10), iph = (await sha(ip + "|c|" + day + "|" + env.SIGNING_SECRET)).slice(0, 20), now = nowMs();
+        const rl = await env.DB.prepare("SELECT COUNT(*) AS d FROM contact WHERE iph = ?1 AND ts > ?2").bind(iph, now - 86400000).first();
+        if (rl && rl.d >= 3) return fail(req, "rate", 429);
+        const tot = await env.DB.prepare("SELECT COUNT(*) AS n FROM contact").first(); if (tot && tot.n >= 500) return fail(req, "full", 503);
+        await env.DB.prepare("INSERT INTO contact (ts, kind, msg, reply, iph) VALUES (?1, ?2, ?3, ?4, ?5)").bind(now, kind, msg, reply || null, iph).run();
+        return json(req, { ok: true });
+      }
+      if (path === "/admin" && req.method === "GET") {   // panel privado: mensajes y moderación del ranking
+        const k = url.searchParams.get("k"); if (!isAdmin(env, k)) return new Response("No", { status: 404 });
+        const msgs = (await env.DB.prepare("SELECT id, ts, kind, msg, reply FROM contact ORDER BY ts DESC LIMIT 100").all()).results;
+        const blocked = (await env.DB.prepare("SELECT name FROM blocked ORDER BY name").all()).results;
+        const boards = [];
+        for (const g of Object.keys(GAMES)) boards.push({ id: g, label: GAMES[g].label, unit: GAMES[g].unit, rows: (await env.DB.prepare("SELECT id, name, score, ts, nonce LIKE 'seed-%' AS seed FROM scores WHERE game = ?1 ORDER BY score DESC, ts ASC LIMIT 30").bind(g).all()).results });
+        const data = JSON.stringify({ msgs: msgs.map(m => ({ ...m, kindLabel: KINDS[m.kind] || m.kind, when: fmtTs(m.ts) })), blocked: blocked.map(r => r.name), boards }).replace(/</g, "\\u003c");
+        return new Response(ADMIN_HTML.replace("__DATA__", () => data), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer" } });
+      }
+      if (path === "/admin/do" && req.method === "POST") {   // acciones de moderación (la clave viaja en cabecera: una web ajena no puede falsificar la petición)
+        if (!isAdmin(env, req.headers.get("X-Admin-Key"))) return new Response("No", { status: 404 });
+        const b = await req.json().catch(() => null); if (!b) return fail(req, "json");
+        const id = Number.isInteger(b.id) ? b.id : null;
+        if (b.do === "delscore" && id != null) { await env.DB.prepare("DELETE FROM scores WHERE id = ?1").bind(id).run(); return json(req, { ok: true }); }
+        if (b.do === "delmsg" && id != null) { await env.DB.prepare("DELETE FROM contact WHERE id = ?1").bind(id).run(); return json(req, { ok: true }); }
+        if (b.do === "block") {   // borra todas las entradas con esas iniciales y las bloquea para el futuro
+          const n = String(b.name || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); if (n.length !== 3) return fail(req, "name");
+          await env.DB.prepare("INSERT OR IGNORE INTO blocked (name) VALUES (?1)").bind(n).run();
+          const r = await env.DB.prepare("DELETE FROM scores WHERE name = ?1").bind(n).run(); return json(req, { ok: true, removed: r.meta ? r.meta.changes : 0 });
+        }
+        if (b.do === "unblock") { const n = String(b.name || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3); await env.DB.prepare("DELETE FROM blocked WHERE name = ?1").bind(n).run(); return json(req, { ok: true }); }
+        if (b.do === "delseed") { const r = await env.DB.prepare("DELETE FROM scores WHERE nonce LIKE 'seed-%'").run(); return json(req, { ok: true, removed: r.meta ? r.meta.changes : 0 }); }
+        return fail(req, "do");
       }
       if (req.method === "GET" && path === "/boards") return json(req, { ok: true, boards: Object.entries(GAMES).map(([id, g]) => ({ id, label: g.label, unit: g.unit })) }, 200, { "Cache-Control": "public, max-age=3600" });
       if (req.method === "POST" && path === "/start") {
@@ -107,7 +182,7 @@ export default {
         const G = GAMES[tk.g], age = nowMs() - tk.ts;
         if (age < MIN_AGE) return fail(req, "early"); if (age > MAX_AGE) return fail(req, "token");
         const score = Number.isInteger(b.score) ? b.score : NaN; if (!(score > 0) || score > G.max || score > G.base + G.rate * (age / 1000)) return fail(req, "score");
-        const name = cleanName(b.name); if (!name) return fail(req, "name");
+        const name = cleanName(b.name); if (!name || await isBlocked(env, name)) return fail(req, "name");
         const reason = Number.isInteger(b.reason) && b.reason >= 0 && b.reason < G.reasons.length ? b.reason : null, lv = Number.isInteger(b.lv) && b.lv >= 0 && b.lv < 1000 ? b.lv : null;
         const ip = req.headers.get("CF-Connecting-IP") || "0", day = new Date().toISOString().slice(0, 10), iph = (await sha(ip + "|" + day + "|" + env.SIGNING_SECRET)).slice(0, 20), now = nowMs();
         const rl = await env.DB.prepare("SELECT SUM(ts > ?2) AS h, COUNT(*) AS d FROM scores WHERE iph = ?1 AND ts > ?3").bind(iph, now - 3600000, now - 86400000).first();

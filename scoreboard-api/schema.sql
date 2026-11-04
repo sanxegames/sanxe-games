@@ -19,3 +19,17 @@ CREATE TABLE IF NOT EXISTS counters (k TEXT PRIMARY KEY, n INTEGER NOT NULL DEFA
 
 -- Métricas anónimas: solo contadores por día (partidas, finales, compartidos, retos, visitas y orígenes).
 CREATE TABLE IF NOT EXISTS ev (day TEXT NOT NULL, k TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, k));
+
+-- Mensajes del formulario de contacto (anónimo; el contacto de respuesta es opcional). Se borran a los 180 días y el hash de IP a las 48 h.
+CREATE TABLE IF NOT EXISTS contact (
+  id    INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts    INTEGER NOT NULL,
+  kind  TEXT    NOT NULL,
+  msg   TEXT    NOT NULL,
+  reply TEXT,
+  iph   TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_contact_iph ON contact (iph, ts);
+
+-- Iniciales bloqueadas por moderación.
+CREATE TABLE IF NOT EXISTS blocked (name TEXT PRIMARY KEY);

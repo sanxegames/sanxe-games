@@ -283,3 +283,5 @@ footer .hint kbd{font:400 1.1rem/1 var(--term);color:var(--cyan)}
 .share-site:hover{background:#ff7384}
 .share-site:active{transform:translateY(4px)}
 #share-msg{margin-left:10px;color:var(--cyan)}
+
+footer a{color:var(--cyan)}footer a:hover{color:var(--yellow)}

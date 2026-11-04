@@ -126,7 +126,7 @@
     const canSave = !!API && !!token && tokenGame === o.game;
     if (canSave) {
       const saveEl = document.createElement("div"); saveEl.className = "sgs-save";
-      saveEl.innerHTML = `<p class="sgs-t">¿GUARDAR EN EL SALÓN DE LA DIMISIÓN?</p><p class="sgs-sub">${fmt(o.score)} ${unit}. Deja tus 3 iniciales y entra en el ranking público.</p>
+      saveEl.innerHTML = `<p class="sgs-t">¿GUARDAR EN EL SALÓN DE LA DIMISIÓN?</p><p class="sgs-sub">${fmt(o.score)} ${unit}. Deja tus 3 iniciales (un apodo, no tu nombre real) y entra en el ranking público.</p>
 <div class="sgs-row"><input class="sgs-in" maxlength="3" size="3" placeholder="AAA" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" aria-label="Tus 3 iniciales (letras o números)"><button type="button" class="sgs-go" disabled>GUARDAR</button><button type="button" class="alt sgs-no">AHORA NO</button></div><p class="sgs-msg" role="status" aria-live="polite"></p>`;
       box.appendChild(saveEl);
       const input = saveEl.querySelector(".sgs-in"), go = saveEl.querySelector(".sgs-go"), no = saveEl.querySelector(".sgs-no"), msg = saveEl.querySelector(".sgs-msg");
