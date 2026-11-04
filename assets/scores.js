@@ -22,6 +22,10 @@
     "unidad-total": { name: "UNIDAD TOTAL", path: "unidad-total/", col: "#31d7c7" },
     "zasca-invaders": { name: "ZASCA INVADERS", path: "zasca-invaders/", col: "#2b9cf0" }
   };
+  /* Guerra de bancadas: solo ideas generales (nunca partidos). El color también se usa en la portada. */
+  const TEAMS = { izq: { label: "IZQUIERDA", col: "#ff4d61" }, cen: { label: "CENTRO", col: "#ffb347" }, der: { label: "DERECHA", col: "#4d8dff" }, mix: { label: "MIXTO", col: "#c792ea" } };
+  const hasTeam = k => Object.prototype.hasOwnProperty.call(TEAMS, k);
+  const dot = k => hasTeam(k) ? `<i class="tm" style="background:${TEAMS[k].col}" title="${TEAMS[k].label}"></i>` : "";
   const safe = (fn, fb = null) => { try { return fn(); } catch { return fb; } };
   const store = { get: k => safe(() => localStorage.getItem(k)), set: (k, v) => safe(() => localStorage.setItem(k, v)) };
   const copy = t => { try { const p = navigator.clipboard.writeText(t); if (p && p.catch) p.catch(() => {}); } catch { /* sin portapapeles */ } };
@@ -38,6 +42,10 @@
   function begin(game) {
     token = null; tokenGame = game; document.querySelectorAll(".sgs").forEach(n => n.remove()); if (!API) return; ev("play", game);
     fetch(API + "/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game }) }).then(r => r.json()).then(j => { if (j && j.ok && tokenGame === game) token = j.token; }).catch(() => {});
+  }
+  async function teams() {
+    if (!API) throw new Error("off");
+    const r = await fetch(`${API}/teams`); const j = await r.json(); if (!j.ok) throw new Error("err"); return j;
   }
   async function top(game, limit = 10) {
     if (!API) throw new Error("off");
@@ -63,6 +71,12 @@
 .sgs-share{margin-top:10px;padding-top:10px;border-top:3px dashed #1b2648}
 .sgs-reto{margin:0 0 8px;font-size:1.3rem;line-height:1.1}
 .sgs-menu{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px}
+.sgs-teams{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:0 0 10px}
+.sgs button.sgs-tm{padding:9px 8px;border:3px solid #27345b;background:#050814;box-shadow:none;color:#aab4d5;font:400 .45rem/1.2 "Press Start 2P",monospace}
+.sgs button.sgs-tm i{display:inline-block;width:.8em;height:.8em;margin-right:.5em;vertical-align:-.05em}
+.sgs button.sgs-tm[aria-checked="true"]{border-color:var(--c);color:#fff;background:#14182e;box-shadow:0 0 0 2px var(--c) inset}
+.sgs button.sgs-tm:active:not(:disabled){transform:none}
+.tm{display:inline-block;width:.7em;height:.7em;margin-right:.55em}
 .sgs-reto-banner{margin:0 0 12px;padding:10px 14px;border:3px solid #ffd34e;background:#14182e;color:#f7f0d5;text-align:center;font:400 1.35rem/1.15 "VT323",monospace}
 .sgs-reto-banner b{color:#ffd34e;font-weight:400}`;
     document.head.appendChild(s);
@@ -106,7 +120,7 @@
     const btn = wrapEl.querySelector(".sgs-sh"), menu = wrapEl.querySelector(".sgs-menu"), msg = wrapEl.querySelector(".sgs-msg");
     btn.addEventListener("click", async () => {
       btn.disabled = true; msg.style.color = "#aab4d5"; msg.textContent = "Preparando imagen…"; ev("share", o.game);
-      const url = challengeUrl(o, state.name), text = `He hecho ${fmt(o.score)} ${unit} en ${G.name}${state.rank ? ` (puesto ${state.rank} del Salón)` : ""}. ¿Me superas?`;
+      const url = challengeUrl(o, state.name), text = `He hecho ${fmt(o.score)} ${unit} en ${G.name}${state.rank ? ` (puesto ${state.rank} del Salón)` : ""}${hasTeam(state.team) ? ` para la bancada ${TEAMS[state.team].label}` : ""}. ¿Me superas?`;
       let blob = null; try { blob = await makeCard(o, state.rank, state.name); } catch { /* sin imagen */ } btn.disabled = false; msg.textContent = "";
       const file = blob && new File([blob], "sanxe-games.png", { type: "image/png" });
       if (navigator.share && file && navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], text: `${text} ${url}`, title: "Sanxe Games" }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
@@ -122,14 +136,19 @@
   /* ------------------------------------------------------------ panel de fin de partida */
   function attach(host, o) {
     if (!host || !(o.score > 0)) return null;
-    css(); ev("over", o.game); const unit = o.unit || "puntos", box = document.createElement("div"), state = { rank: null, name: "" }; box.className = "sgs";
+    css(); ev("over", o.game); const unit = o.unit || "puntos", box = document.createElement("div"), state = { rank: null, name: "", team: null }; box.className = "sgs";
     const canSave = !!API && !!token && tokenGame === o.game;
     if (canSave) {
       const saveEl = document.createElement("div"); saveEl.className = "sgs-save";
       saveEl.innerHTML = `<p class="sgs-t">¿GUARDAR EN EL SALÓN DE LA DIMISIÓN?</p><p class="sgs-sub">${fmt(o.score)} ${unit}. Deja tus 3 iniciales (un apodo, no tu nombre real) y entra en el ranking público.</p>
+<p class="sgs-sub">Elige bancada y suma puntos a tu bando en la Guerra de Bancadas.</p><div class="sgs-teams" role="radiogroup" aria-label="Tu bancada">${Object.keys(TEAMS).map(k => `<button type="button" class="sgs-tm" role="radio" aria-checked="false" data-team="${k}" style="--c:${TEAMS[k].col}"><i style="background:${TEAMS[k].col}"></i>${TEAMS[k].label}</button>`).join("")}</div>
 <div class="sgs-row"><input class="sgs-in" maxlength="3" size="3" placeholder="AAA" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" aria-label="Tus 3 iniciales (letras o números)"><button type="button" class="sgs-go" disabled>GUARDAR</button><button type="button" class="alt sgs-no">AHORA NO</button></div><p class="sgs-msg" role="status" aria-live="polite"></p>`;
       box.appendChild(saveEl);
       const input = saveEl.querySelector(".sgs-in"), go = saveEl.querySelector(".sgs-go"), no = saveEl.querySelector(".sgs-no"), msg = saveEl.querySelector(".sgs-msg");
+      let team = store.get("sgs-team"); if (!hasTeam(team)) team = null;
+      const paintTeams = () => saveEl.querySelectorAll(".sgs-tm").forEach(b => b.setAttribute("aria-checked", String(b.dataset.team === team)));
+      saveEl.querySelectorAll(".sgs-tm").forEach(b => b.addEventListener("click", () => { team = team === b.dataset.team ? null : b.dataset.team; store.set("sgs-team", team || ""); paintTeams(); }));
+      paintTeams();
       const clean = () => { input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3); go.disabled = input.value.length !== 3; };
       input.value = store.get("sgs-name") || ""; clean();
       input.addEventListener("input", clean);
@@ -142,10 +161,10 @@
         if (sending || go.disabled) return; sending = true; go.disabled = true; msg.style.color = "#aab4d5"; msg.textContent = "Guardando…";
         try {
           const name = input.value; store.set("sgs-name", name);
-          const r = await fetch(API + "/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, name, score: Math.round(o.score), reason: o.reason == null ? null : o.reason, lv: o.lv == null ? null : o.lv }) });
+          const r = await fetch(API + "/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, name, team: team || undefined, score: Math.round(o.score), reason: o.reason == null ? null : o.reason, lv: o.lv == null ? null : o.lv }) });
           const j = await r.json();
           if (!j.ok) { msg.style.color = "#ff8fa3"; msg.textContent = ERR[j.error] || "No se ha podido guardar."; sending = false; go.disabled = j.error === "used" || j.error === "token"; if (j.error === "used") token = null; return; }
-          token = null; state.rank = j.rank; state.name = name; done(saveEl, j, name, o, unit);
+          token = null; state.rank = j.rank; state.name = name; state.team = team; done(saveEl, j, name, o, unit, team);
         } catch { msg.style.color = "#ff8fa3"; msg.textContent = ERR.net; sending = false; go.disabled = false; }
       }
       setTimeout(() => safe(() => input.focus({ preventScroll: true })), 160);
@@ -153,9 +172,12 @@
     host.appendChild(box); shareUi(box, o, state);
     return box;
   }
-  function done(el, j, name, o, unit) {
-    const rows = (j.scores || []).map(r => `<tr${r.name === name && r.score === Math.round(o.score) ? ' class="me"' : ""}><td>${r.rank}.º</td><td>${r.name}</td><td>${fmt(r.score)}</td></tr>`).join("");
-    el.innerHTML = `<p class="sgs-t">¡EN EL SALÓN! PUESTO ${j.rank}.º</p><p class="sgs-sub">${name} · ${fmt(o.score)} ${unit}</p><table class="sgs-top" aria-label="Mejores puntuaciones">${rows}</table><p class="sgs-sub" style="margin-top:8px"><a href="../#salon">Ver el Salón completo</a></p>`;
+  function done(el, j, name, o, unit, team) {
+    const rows = (j.scores || []).map(r => `<tr${r.name === name && r.score === Math.round(o.score) ? ' class="me"' : ""}><td>${r.rank}.º</td><td>${dot(r.team)}${r.name}</td><td>${fmt(r.score)}</td></tr>`).join("");
+    el.innerHTML = `<p class="sgs-t">¡EN EL SALÓN! PUESTO ${j.rank}.º</p><p class="sgs-sub">${name} · ${fmt(o.score)} ${unit}</p><table class="sgs-top" aria-label="Mejores puntuaciones">${rows}</table><p class="sgs-sub sgs-war" style="margin-top:8px"></p><p class="sgs-sub"><a href="../#salon">Ver el Salón</a> · <a href="../#bancadas">Guerra de Bancadas</a></p>`;
+    const wl = el.querySelector(".sgs-war"); if (!hasTeam(team)) { wl.textContent = "Sin bancada: esta puntuación no suma a ningún bando."; return; }
+    wl.innerHTML = `${dot(team)}Sumas para la bancada <b style="color:${TEAMS[team].col}">${TEAMS[team].label}</b>.`;
+    teams().then(d => { const i = d.teams.findIndex(x => x.id === team); if (i >= 0) wl.innerHTML = `${dot(team)}<b style="color:${TEAMS[team].col}">${TEAMS[team].label}</b> va ${i + 1}.ª de 4 con ${d.teams[i].points} pts.`; }).catch(() => {});
   }
 
   /* ------------------------------------------------------------ compartir la web (portada) */
@@ -179,5 +201,5 @@
     }
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  window.SGS = { api: API, hit, boards: BOARDS, begin, attach, top, fmt, ev, shareSite, enabled: !!API };
+  window.SGS = { api: API, hit, boards: BOARDS, begin, attach, top, teams, TEAMS, dot, fmt, ev, shareSite, enabled: !!API };
 })();

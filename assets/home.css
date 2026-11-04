@@ -285,3 +285,17 @@ footer .hint kbd{font:400 1.1rem/1 var(--term);color:var(--cyan)}
 #share-msg{margin-left:10px;color:var(--cyan)}
 
 footer a{color:var(--cyan)}footer a:hover{color:var(--yellow)}
+
+/* ---------- Guerra de bancadas ---------- */
+.tm{display:inline-block;width:.7em;height:.7em;margin-right:.55em}
+.war{display:grid;gap:14px;margin:0 0 6px}
+.war-row{display:grid;grid-template-columns:auto 1fr auto;gap:6px 14px;align-items:center;padding:14px 16px;border:4px solid var(--line);background:var(--deep);box-shadow:6px 6px 0 var(--deep);border-left:12px solid var(--c)}
+.war-n{font:400 clamp(.55rem,1.4vw,.75rem)/1 var(--px);color:var(--yellow)}
+.war-name{font:400 clamp(.6rem,1.8vw,.9rem)/1.3 var(--px);color:var(--c)}
+.war-pts{font:400 clamp(.55rem,1.5vw,.8rem)/1 var(--px);color:var(--ink);text-align:right;white-space:nowrap}
+.war-bar{grid-column:1/-1;height:16px;background:#17213c;border:3px solid #050814}
+.war-bar i{display:block;height:100%;background:var(--c);transition:width .9s steps(12)}
+.war-meta{grid-column:1/-1;color:var(--muted);font-size:1.15rem;line-height:1}
+.war-cta{margin:18px 0 0;text-align:center}
+.btn-link{display:inline-block;padding:14px 18px;background:var(--red);color:#fff;text-decoration:none;font:400 .6rem/1.2 var(--px);box-shadow:0 5px 0 var(--red-d)}
+.btn-link:hover{background:#ff6a7b}

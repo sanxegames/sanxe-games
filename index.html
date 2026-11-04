@@ -24,7 +24,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/PressStart2P-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/VT323-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/home.css?v=11">
+  <link rel="stylesheet" href="assets/home.css?v=12">
   <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -44,6 +44,7 @@
       <a href="#juegos">JUEGOS</a>
       <a href="#sondeo">SONDEO</a>
       <a href="#salon">SALÓN</a>
+      <a href="#bancadas">BANCADAS</a>
       <a href="#manifiesto">MANIFIESTO</a>
     </nav>
     <button id="sound" type="button" aria-pressed="true" aria-label="Activar o desactivar sonido"><span class="snd-l">SONIDO </span><span id="sound-s">SÍ</span></button>
@@ -270,6 +271,20 @@
 
     <div class="girder" aria-hidden="true"></div>
 
+    <!-- ================= GUERRA DE BANCADAS ================= -->
+    <section class="section" id="bancadas" aria-labelledby="t-banc">
+      <div class="wrap">
+        <p class="kicker reveal">ELIGE BANDO · SIN PARTIDOS, SOLO ESCAÑOS</p>
+        <h2 class="title reveal" id="t-banc">GUERRA DE BANCADAS</h2>
+        <p class="lead reveal">Al guardar tu puntuación eliges bancada. Cada puesto del top 10 de cada juego suma puntos a tu bando: 10 al primero, 1 al décimo. Gana la bancada que más escaños arcade controle.</p>
+        <div class="war reveal" id="war" aria-live="polite"><p class="hall-note">Pasando lista de escaños…</p></div>
+        <p class="hall-note" id="war-note">Cuenta una entrada por iniciales y juego (la mejor). Solo ideas generales: nos reímos de todos.</p>
+        <p class="war-cta"><a class="btn-link" href="#juegos">ELEGIR JUEGO Y SUMAR</a></p>
+      </div>
+    </section>
+
+    <div class="girder" aria-hidden="true"></div>
+
     <!-- ================= MANIFIESTO ================= -->
     <section class="section" id="manifiesto" aria-labelledby="t-man">
       <div class="wrap">
@@ -307,7 +322,7 @@
   <script src="assets/commuter-sprites.js"></script>
   <script src="pastor-de-socios/sprites.js?v=2"></script>
   <script src="me-gusta-la-fruta/sprites.js?v=1"></script>
-  <script src="assets/scores.js?v=8"></script>
-  <script src="assets/home.js?v=21"></script>
+  <script src="assets/scores.js?v=9"></script>
+  <script src="assets/home.js?v=22"></script>
 </body>
 </html>

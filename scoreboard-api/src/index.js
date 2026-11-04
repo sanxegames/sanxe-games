@@ -17,6 +17,7 @@ const GAMES = {
 const ORIGINS = new Set(["https://sanxegames.es", "https://www.sanxegames.es", "http://localhost:8149", "http://127.0.0.1:8149"]);
 const BLOCK = new Set(["ASS", "CUM", "FAG", "FUC", "FUK", "KKK", "NIG", "NZI", "SEX", "TIT", "PTA", "PUT", "PUS"]);
 const BOT = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|node/i;
+const TEAMS = { izq: "IZQUIERDA", cen: "CENTRO", der: "DERECHA", mix: "MIXTO" };   // guerra de bancadas: solo ideas generales, nunca partidos
 const KINDS = { contacto: "Contacto", retirada: "Retirada de contenido", error: "Error o sugerencia", ranking: "Ranking: quitar una entrada" };
 const MIN_AGE = 4000, MAX_AGE = 6 * 3600 * 1000, HOUR_LIMIT = 12, DAY_LIMIT = 40;
 
@@ -51,10 +52,25 @@ const isAdmin = (env, k) => !!env.STATS_KEY && typeof k === "string" && k.length
 async function isBlocked(env, name) { try { return !!(await env.DB.prepare("SELECT 1 FROM blocked WHERE name = ?1").bind(name).first()); } catch { return false; } }
 const fmtTs = ms => new Date(ms).toISOString().replace("T", " ").slice(0, 16);
 function cleanName(raw) { const n = String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); return n.length === 3 && !BLOCK.has(n) ? n : null; }
-const publicRow = (g, r, i) => ({ rank: i + 1, name: r.name, score: r.score, lv: r.lv, reason: r.reason != null ? (GAMES[g].reasons[r.reason] || "") : "", ts: r.ts });
+const publicRow = (g, r, i) => ({ rank: i + 1, name: r.name, score: r.score, lv: r.lv, reason: r.reason != null ? (GAMES[g].reasons[r.reason] || "") : "", ts: r.ts, team: Object.prototype.hasOwnProperty.call(TEAMS, r.team) ? r.team : null });
 
+/* Clasificación de bancadas: en cada tablero, los 10 mejores (una entrada por iniciales) dan 10..1 puntos a su bancada. Se recalcula como mucho una vez por minuto y se guarda en D1. */
+async function standings(env) {
+  const now = nowMs();
+  try { const c = await env.DB.prepare("SELECT v, ts FROM cache WHERE k = 'teams'").first(); if (c && now - c.ts < 60000) return JSON.parse(c.v); } catch { /* sin caché */ }
+  const ids = Object.keys(TEAMS), pts = {}, pl = {}, pn = {}; ids.forEach(k => { pts[k] = 0; pl[k] = 0; pn[k] = 0; });
+  for (const g of Object.keys(GAMES)) {
+    const { results } = await env.DB.prepare("SELECT team, MAX(score) AS s FROM scores WHERE game = ?1 GROUP BY name ORDER BY s DESC LIMIT 10").bind(g).all();
+    results.forEach((r, i) => { if (Object.prototype.hasOwnProperty.call(TEAMS, r.team)) pts[r.team] += 10 - i; });
+  }
+  const rs = (await env.DB.prepare("SELECT team, COUNT(DISTINCT name) AS p, COUNT(*) AS n FROM scores WHERE team IS NOT NULL GROUP BY team").all()).results;
+  rs.forEach(r => { if (Object.prototype.hasOwnProperty.call(TEAMS, r.team)) { pl[r.team] = r.p; pn[r.team] = r.n; } });
+  const data = { ok: true, boards: Object.keys(GAMES).length, teams: ids.map(id => ({ id, label: TEAMS[id], points: pts[id], players: pl[id], plays: pn[id] })).sort((a, b) => b.points - a.points || b.players - a.players) };
+  try { await env.DB.prepare("INSERT INTO cache (k, v, ts) VALUES ('teams', ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, ts = ?2").bind(JSON.stringify(data), now).run(); } catch { /* sin caché */ }
+  return data;
+}
 async function top(env, game, limit) {
-  const { results } = await env.DB.prepare("SELECT name, score, lv, reason, ts FROM scores WHERE game = ?1 ORDER BY score DESC, ts ASC LIMIT ?2").bind(game, limit).all();
+  const { results } = await env.DB.prepare("SELECT name, score, lv, reason, ts, team FROM scores WHERE game = ?1 ORDER BY score DESC, ts ASC LIMIT ?2").bind(game, limit).all();
   return results.map((r, i) => publicRow(game, r, i));
 }
 
@@ -75,7 +91,7 @@ function render(){
  $("nm").textContent=D.msgs.length;
  $("msgs").innerHTML=D.msgs.map(m=>'<div class="m"><span class="tag">'+e(m.kindLabel)+'</span><small>'+m.when+' UTC'+(m.reply?' · responder a: <b>'+e(m.reply)+'</b>':' · sin contacto')+'</small><p>'+e(m.msg)+'</p><button data-del-msg="'+m.id+'">Borrar</button></div>').join("")||"<p>Sin mensajes.</p>";
  $("blk").innerHTML=D.blocked.map(n=>'<span class="chip">'+e(n)+' <button data-unblock="'+e(n)+'">x</button></span>').join("")||"Ninguna.";
- $("boards").innerHTML=D.boards.map(b=>'<h3>'+e(b.label)+' <small>('+e(b.unit)+')</small></h3><table><tr><th>#</th><th>Iniciales</th><th>Puntos</th><th>Fecha</th><th></th></tr>'+b.rows.map((r,i)=>'<tr class="'+(r.seed?'seed':'')+'"><td>'+(i+1)+'</td><td>'+e(r.name)+(r.seed?' (seed)':'')+'</td><td>'+r.score+'</td><td>'+new Date(r.ts).toISOString().slice(0,16).replace("T"," ")+'</td><td><button data-del="'+r.id+'">Borrar</button> <button data-block="'+e(r.name)+'">Bloquear</button></td></tr>').join("")+'</table>').join("");
+ $("boards").innerHTML=D.boards.map(b=>'<h3>'+e(b.label)+' <small>('+e(b.unit)+')</small></h3><table><tr><th>#</th><th>Iniciales</th><th>Puntos</th><th>Fecha</th><th></th></tr>'+b.rows.map((r,i)=>'<tr class="'+(r.seed?'seed':'')+'"><td>'+(i+1)+'</td><td>'+e(r.name)+(r.team?' / '+e(r.team):'')+(r.seed?' (seed)':'')+'</td><td>'+r.score+'</td><td>'+new Date(r.ts).toISOString().slice(0,16).replace("T"," ")+'</td><td><button data-del="'+r.id+'">Borrar</button> <button data-block="'+e(r.name)+'">Bloquear</button></td></tr>').join("")+'</table>').join("");
 }
 document.addEventListener("click",ev=>{const t=ev.target;if(t.tagName!=="BUTTON")return;
  if(t.dataset.del)act({do:"delscore",id:+t.dataset.del},()=>{D.boards.forEach(b=>b.rows=b.rows.filter(r=>r.id!=+t.dataset.del));render()});
@@ -151,7 +167,7 @@ export default {
         const msgs = (await env.DB.prepare("SELECT id, ts, kind, msg, reply FROM contact ORDER BY ts DESC LIMIT 100").all()).results;
         const blocked = (await env.DB.prepare("SELECT name FROM blocked ORDER BY name").all()).results;
         const boards = [];
-        for (const g of Object.keys(GAMES)) boards.push({ id: g, label: GAMES[g].label, unit: GAMES[g].unit, rows: (await env.DB.prepare("SELECT id, name, score, ts, nonce LIKE 'seed-%' AS seed FROM scores WHERE game = ?1 ORDER BY score DESC, ts ASC LIMIT 30").bind(g).all()).results });
+        for (const g of Object.keys(GAMES)) boards.push({ id: g, label: GAMES[g].label, unit: GAMES[g].unit, rows: (await env.DB.prepare("SELECT id, name, team, score, ts, nonce LIKE 'seed-%' AS seed FROM scores WHERE game = ?1 ORDER BY score DESC, ts ASC LIMIT 30").bind(g).all()).results });
         const data = JSON.stringify({ msgs: msgs.map(m => ({ ...m, kindLabel: KINDS[m.kind] || m.kind, when: fmtTs(m.ts) })), blocked: blocked.map(r => r.name), boards }).replace(/</g, "\\u003c");
         return new Response(ADMIN_HTML.replace("__DATA__", () => data), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer" } });
       }
@@ -170,6 +186,7 @@ export default {
         if (b.do === "delseed") { const r = await env.DB.prepare("DELETE FROM scores WHERE nonce LIKE 'seed-%'").run(); return json(req, { ok: true, removed: r.meta ? r.meta.changes : 0 }); }
         return fail(req, "do");
       }
+      if (req.method === "GET" && path === "/teams") return json(req, await standings(env), 200, { "Cache-Control": "public, max-age=30" });
       if (req.method === "GET" && path === "/boards") return json(req, { ok: true, boards: Object.entries(GAMES).map(([id, g]) => ({ id, label: g.label, unit: g.unit })) }, 200, { "Cache-Control": "public, max-age=3600" });
       if (req.method === "POST" && path === "/start") {
         const b = await req.json().catch(() => null); if (!b || !GAMES[b.game]) return fail(req, "game");
@@ -183,11 +200,12 @@ export default {
         if (age < MIN_AGE) return fail(req, "early"); if (age > MAX_AGE) return fail(req, "token");
         const score = Number.isInteger(b.score) ? b.score : NaN; if (!(score > 0) || score > G.max || score > G.base + G.rate * (age / 1000)) return fail(req, "score");
         const name = cleanName(b.name); if (!name || await isBlocked(env, name)) return fail(req, "name");
+        const team = typeof b.team === "string" && Object.prototype.hasOwnProperty.call(TEAMS, b.team) ? b.team : null;
         const reason = Number.isInteger(b.reason) && b.reason >= 0 && b.reason < G.reasons.length ? b.reason : null, lv = Number.isInteger(b.lv) && b.lv >= 0 && b.lv < 1000 ? b.lv : null;
         const ip = req.headers.get("CF-Connecting-IP") || "0", day = new Date().toISOString().slice(0, 10), iph = (await sha(ip + "|" + day + "|" + env.SIGNING_SECRET)).slice(0, 20), now = nowMs();
         const rl = await env.DB.prepare("SELECT SUM(ts > ?2) AS h, COUNT(*) AS d FROM scores WHERE iph = ?1 AND ts > ?3").bind(iph, now - 3600000, now - 86400000).first();
         if ((rl && rl.h || 0) >= HOUR_LIMIT || (rl && rl.d || 0) >= DAY_LIMIT) return fail(req, "rate", 429);
-        try { await env.DB.prepare("INSERT INTO scores (game, name, score, reason, lv, ts, nonce, iph) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)").bind(tk.g, name, score, reason, lv, now, tk.n, iph).run(); }
+        try { await env.DB.prepare("INSERT INTO scores (game, name, score, reason, lv, ts, nonce, iph, team) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)").bind(tk.g, name, score, reason, lv, now, tk.n, iph, team).run(); }
         catch (e) { return fail(req, /UNIQUE/i.test(String(e)) ? "used" : "db", /UNIQUE/i.test(String(e)) ? 409 : 500); }
         const rk = await env.DB.prepare("SELECT COUNT(*) + 1 AS r FROM scores WHERE game = ?1 AND (score > ?2 OR (score = ?2 AND ts < ?3))").bind(tk.g, score, now).first();
         if (Math.random() < .05) {    // limpieza: deja las 200 mejores por juego y borra hashes de IP de más de 48 h

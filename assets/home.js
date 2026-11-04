@@ -854,7 +854,7 @@
   function initHall() {
     const tabs = $("#hall-tabs"), body = $("#hall-body"), unitEl = $("#hall-unit"), note = $("#hall-note"), S = window.SGS; if (!tabs || !body || !S) return;
     const sample = body.innerHTML, base = note.textContent; let cur = null, seq = 0;
-    const row = (cells, cls) => { const tr = document.createElement("tr"); if (cls) tr.className = cls; cells.forEach(c => { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); }); return tr; };
+    const row = (cells, cls) => { const tr = document.createElement("tr"); if (cls) tr.className = cls; cells.forEach(c => { const td = document.createElement("td"); if (c && typeof c === "object") { td.textContent = c.t; if (c.team && S.TEAMS && S.TEAMS[c.team]) { const i = document.createElement("i"); i.className = "tm"; i.style.background = S.TEAMS[c.team].col; i.title = S.TEAMS[c.team].label; td.prepend(i); } } else td.textContent = c; tr.appendChild(td); }); return tr; };
     function show(rows, unit, text) { body.replaceChildren(...rows); unitEl.textContent = unit.toUpperCase(); if (text != null) note.textContent = text; }
     async function load(id) {
       cur = id; const mine = ++seq; tabs.querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.id === id)));
@@ -863,7 +863,7 @@
       show([row(["", "", "", "Cargando el Salón…"])], unit);
       try {
         const j = await S.top(id, 10); if (mine !== seq) return;
-        const rows = j.scores.map(r => row([r.rank + ".º", r.name, S.fmt(r.score), (r.lv ? "Nv. " + r.lv + " · " : "") + (r.reason || "")]));
+        const rows = j.scores.map(r => row([r.rank + ".º", { t: r.name, team: r.team }, S.fmt(r.score), (r.lv ? "Nv. " + r.lv + " · " : "") + (r.reason || "")]));
         if (!rows.length) rows.push(row(["1.º", "???", "???????", "Aún no hay nadie. Sé el primero en asumir responsabilidades (las de otro)."], "me"));
         else rows.push(row([(j.scores.length + 1) + ".º", "TÚ", "???????", "Tu nombre aquí. Juega y entra en el Salón."], "me"));
         show(rows, unit, base);
@@ -875,12 +875,33 @@
     if ("IntersectionObserver" in window) new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { start(); o.disconnect(); } }, { rootMargin: "200px" }).observe(tabs); else start();
   }
 
+  /* ------------------------------------------- Guerra de bancadas */
+  function initWar() {
+    const box = $("#war"), note = $("#war-note"), S = window.SGS; if (!box || !S) return;
+    const order = ["izq", "cen", "der", "mix"], base = note.textContent;
+    function render(list) {
+      const max = Math.max(1, ...list.map(t => t.points)); box.replaceChildren();
+      list.forEach((t, i) => {
+        const c = S.TEAMS[t.id].col, r = document.createElement("div"); r.className = "war-row"; r.style.setProperty("--c", c);
+        const w = Math.max(t.points ? 3 : 0, Math.round(t.points / max * 100));
+        r.innerHTML = `<span class="war-n">${i + 1}.º</span><span class="war-name">${t.label}</span><span class="war-pts">${t.points} PTS</span><span class="war-bar"><i style="width:${w}%"></i></span><span class="war-meta">${t.players} ${t.players === 1 ? "jugador" : "jugadores"} · ${t.plays} ${t.plays === 1 ? "partida" : "partidas"}</span>`;
+        box.appendChild(r);
+      });
+      fixAccents(box);
+    }
+    const empty = () => render(order.map(id => ({ id, label: S.TEAMS[id].label, points: 0, players: 0, plays: 0 })));
+    if (!S.enabled) { empty(); note.textContent = "La guerra está en obras. " + base; return; }
+    let started = false;
+    const start = () => { if (started) return; started = true; S.teams().then(d => { render(d.teams); if (!d.teams.some(t => t.points)) note.textContent = "Aún no hay combatientes: sé el primero en elegir bando. " + base; }).catch(() => { empty(); note.textContent = "El recuento no responde ahora mismo. " + base; }); };
+    empty(); if ("IntersectionObserver" in window) new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { start(); o.disconnect(); } }, { rootMargin: "200px" }).observe(box); else start();
+  }
+
   const shareBtn = $("#share-site"); if (shareBtn && window.SGS) shareBtn.addEventListener("click", () => SGS.shareSite($("#share-msg")));
 
   /* ---------------------------------------------------------------- init */
   fixAccents(document.body); reveals(); poll(); updateScore();
   $$("canvas[data-sil]").forEach(c => silhouette(c, c.dataset.sil));
   $$("canvas[data-icon]").forEach(c => icon(c, c.dataset.icon));
-  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb(); initMoncloaThumb(); initBanderaThumb(); initUnidadThumb(); initZascaThumb(); initHall();
+  initHero(); initAttract(); initPastorThumb(); initFalconThumb(); initFruitThumb(); initMoncloaThumb(); initBanderaThumb(); initUnidadThumb(); initZascaThumb(); initHall(); initWar();
   bootDone.then(typeTagline);
 })();
