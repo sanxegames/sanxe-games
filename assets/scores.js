@@ -23,7 +23,7 @@
     "zasca-invaders": { name: "ZASCA INVADERS", path: "zasca-invaders/", col: "#2b9cf0" }
   };
   /* Guerra de bancadas: solo ideas generales (nunca partidos). El color también se usa en la portada. */
-  const TEAMS = { izq: { label: "IZQUIERDA", col: "#ff4d61" }, cen: { label: "CENTRO", col: "#ffb347" }, der: { label: "DERECHA", col: "#4d8dff" }, mix: { label: "MIXTO", col: "#c792ea" } };
+  const TEAMS = { izq: { label: "IZQUIERDA", col: "#e6007e" }, cizq: { label: "CENTRO-IZQ", col: "#ff3b3b" }, cder: { label: "CENTRO-DER", col: "#1d84ce" }, der: { label: "DERECHA", col: "#63be21" } };
   const hasTeam = k => Object.prototype.hasOwnProperty.call(TEAMS, k);
   const dot = k => hasTeam(k) ? `<i class="tm" style="background:${TEAMS[k].col}" title="${TEAMS[k].label}"></i>` : "";
   const safe = (fn, fb = null) => { try { return fn(); } catch { return fb; } };

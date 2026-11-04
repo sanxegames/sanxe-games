@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS scores (
   lv     INTEGER,            -- nivel/viaje/etapa (opcional)
   ts     INTEGER NOT NULL,   -- ms epoch
   nonce  TEXT    NOT NULL UNIQUE,
-  team   TEXT,               -- bancada elegida (izq, cen, der, mix), opcional
+  team   TEXT,               -- bancada elegida (izq, cizq, cder, der), opcional
   iph    TEXT                -- hash de IP con sal diaria, solo para limitar abusos (se borra a las 48 h)
 );
 CREATE INDEX IF NOT EXISTS idx_scores_game ON scores (game, score DESC, ts ASC);
@@ -35,6 +35,6 @@ CREATE INDEX IF NOT EXISTS idx_contact_iph ON contact (iph, ts);
 -- Iniciales bloqueadas por moderaciÃ³n.
 CREATE TABLE IF NOT EXISTS blocked (name TEXT PRIMARY KEY);
 
--- Guerra de bancadas: bancada elegida al guardar la puntuación (izq, cen, der, mix) y caché de la clasificación.
+-- Guerra de bancadas: bancada elegida al guardar la puntuación (izq, cizq, cder, der) y caché de la clasificación.
 -- Migración en una base ya creada: ALTER TABLE scores ADD COLUMN team TEXT;
 CREATE TABLE IF NOT EXISTS cache (k TEXT PRIMARY KEY, v TEXT NOT NULL, ts INTEGER NOT NULL);

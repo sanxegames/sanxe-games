@@ -17,7 +17,7 @@ const GAMES = {
 const ORIGINS = new Set(["https://sanxegames.es", "https://www.sanxegames.es", "http://localhost:8149", "http://127.0.0.1:8149"]);
 const BLOCK = new Set(["ASS", "CUM", "FAG", "FUC", "FUK", "KKK", "NIG", "NZI", "SEX", "TIT", "PTA", "PUT", "PUS"]);
 const BOT = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|node/i;
-const TEAMS = { izq: "IZQUIERDA", cen: "CENTRO", der: "DERECHA", mix: "MIXTO" };   // guerra de bancadas: solo ideas generales, nunca partidos
+const TEAMS = { izq: "IZQUIERDA", cizq: "CENTRO-IZQ", cder: "CENTRO-DER", der: "DERECHA" };   // guerra de bancadas: solo ideas generales, nunca partidos
 const KINDS = { contacto: "Contacto", retirada: "Retirada de contenido", error: "Error o sugerencia", ranking: "Ranking: quitar una entrada" };
 const MIN_AGE = 4000, MAX_AGE = 6 * 3600 * 1000, HOUR_LIMIT = 12, DAY_LIMIT = 40;
 

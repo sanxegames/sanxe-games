@@ -878,7 +878,7 @@
   /* ------------------------------------------- Guerra de bancadas */
   function initWar() {
     const box = $("#war"), note = $("#war-note"), S = window.SGS; if (!box || !S) return;
-    const order = ["izq", "cen", "der", "mix"], base = note.textContent;
+    const order = ["izq", "cizq", "cder", "der"], base = note.textContent;
     function render(list) {
       const max = Math.max(1, ...list.map(t => t.points)); box.replaceChildren();
       list.forEach((t, i) => {
